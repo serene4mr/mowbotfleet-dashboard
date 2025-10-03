@@ -1,7 +1,7 @@
 # ui/layout.py
 
 import streamlit as st
-from .dashboard import render_header, render_row1, render_row2, render_row3
+from .dashboard import render_header, render_row1, render_row2, render_row3, render_debug
 from .settings import render_settings
 from streamlit.runtime.scriptrunner import RerunException, RerunData
 
@@ -16,3 +16,4 @@ def render_dashboard():
     render_row1()
     render_row2()
     render_row3()
+    render_debug()

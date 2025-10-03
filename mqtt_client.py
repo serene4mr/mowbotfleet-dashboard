@@ -2,7 +2,7 @@
 
 import asyncio
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict
 from vda5050.clients.master_control import MasterControlClient
 from vda5050.models.state import State
@@ -26,20 +26,27 @@ def _update_agv(serial: str, state: State):
             operating_mode="",
             position=(0.0, 0.0),
             theta=0.0,
-            last_update=datetime.utcnow()
+            last_update=datetime.now(timezone.utc)
         )
         fleet_state[serial] = info
 
     # Update AGV information from state
     info.battery = state.batteryState.batteryCharge
     info.operating_mode = state.operatingMode.value
-    info.position = (state.agvPosition.y, state.agvPosition.x)
-    info.theta = state.agvPosition.theta or 0.0
-    info.last_update = datetime.utcnow()
+    
+    # Handle position data (may be None in some state messages)
+    if state.agvPosition:
+        info.position = (state.agvPosition.y, state.agvPosition.x)
+        info.theta = state.agvPosition.theta or 0.0
+    else:
+        # Keep existing position if no new position data
+        pass
+    
+    info.last_update = datetime.now(timezone.utc)
     info.current_order = state.orderId
     info.errors = [
-        ErrorInfo(datetime.utcnow(), e.errorType, e.errorDescription, e.errorLevel.value)
-        for e in (state.errorList or [])
+        ErrorInfo(datetime.now(timezone.utc), e.errorType, e.errorDescription, e.errorLevel.value)
+        for e in (getattr(state, 'errors', []) or [])
     ]
 
 def on_state_update(serial: str, state: State):
@@ -87,10 +94,10 @@ def _connect_in_thread(broker_url: str, username: str, password: str, client_id:
                 try:
                     broker_port = int(broker_port)
                 except ValueError:
-                    print(f"Invalid port number in broker URL: {broker_port}")
+                    # Invalid port number
                     return
             else:
-                print(f"Port must be specified in broker URL. Expected format: 'host:port', got: '{broker_url_clean}'")
+                # Invalid broker URL format
                 return
             
             # Initialize MasterControlClient with required parameters
@@ -108,6 +115,7 @@ def _connect_in_thread(broker_url: str, username: str, password: str, client_id:
             _client.on_state_update(on_state_update)
             _client.on_connection_change(lambda serial, state: on_connected() if state == "ONLINE" else on_disconnected())
             
+            
             # Connect to broker
             success = loop.run_until_complete(_client.connect())
             
@@ -124,7 +132,7 @@ def _connect_in_thread(broker_url: str, username: str, password: str, client_id:
                 loop.close()
                 
         except Exception as e:
-            print(f"Connection error: {e}")
+            # Connection error - will be handled by the caller
             loop.close()
     
     # Start connection in a separate thread
@@ -152,8 +160,8 @@ async def disconnect():
             # Disconnect gracefully
             await _client.disconnect()
         except Exception as e:
-            # Log any disconnect errors but don't crash
-            print(f"Warning: Disconnect error: {e}")
+            # Disconnect errors are handled gracefully
+            pass
         finally:
             _client = None
     
@@ -163,3 +171,17 @@ async def disconnect():
     if _connection_task and _connection_task.is_alive():
         # The thread will stop when the event loop is closed
         _connection_task = None
+
+def is_connected():
+    """Check if MQTT client is connected"""
+    return _client is not None and _connection_task is not None and _connection_task.is_alive()
+
+def get_debug_info():
+    """Get debug information about the MQTT connection"""
+    return {
+        "connected": is_connected(),
+        "client_exists": _client is not None,
+        "connection_task_alive": _connection_task.is_alive() if _connection_task else False,
+        "fleet_state_count": len(fleet_state),
+        "fleet_state_keys": list(fleet_state.keys())
+    }
