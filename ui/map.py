@@ -56,8 +56,21 @@ def render_map():
         auto_highlight=True
     )
 
-    # Set initial view state (center on first AGV or default location)
-    if map_data:
+    # Set view state based on selected AGV or default location
+    selected_serial = st.session_state.get('selected_agv')
+    
+    if selected_serial and selected_serial in fleet_state:
+        # Center on selected AGV
+        agv = fleet_state[selected_serial]
+        lat, lon = agv.position
+        view_state = pdk.ViewState(
+            longitude=lon,
+            latitude=lat,
+            zoom=16,  # Closer zoom for selected AGV
+            pitch=0
+        )
+    elif map_data:
+        # Center on first AGV if no selection
         view_state = pdk.ViewState(
             longitude=map_data[0]["lon"],
             latitude=map_data[0]["lat"],
@@ -65,8 +78,9 @@ def render_map():
             pitch=0
         )
     else:
+        # Default Seoul coordinates
         view_state = pdk.ViewState(
-            longitude=127.0567,  # Default Seoul coordinates
+            longitude=127.0567,
             latitude=37.5075,
             zoom=12,
             pitch=0
