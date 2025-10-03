@@ -3,6 +3,29 @@
 import streamlit as st
 import pydeck as pdk
 from mqtt_client import fleet_state
+import urllib.parse
+
+def create_arrow_icon(color):
+    """Create an SVG arrow icon with the specified color"""
+    # Convert color array to hex
+    if isinstance(color, list) and len(color) >= 3:
+        hex_color = f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
+    else:
+        hex_color = "#00ff00"  # Default green
+    
+    # SVG arrow pointing North (NED convention: 0° = North)
+    svg = f"""
+    <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 3 L15 27 M9 9 L15 3 L21 9" 
+              stroke="{hex_color}" 
+              stroke-width="4" 
+              fill="none" 
+              stroke-linecap="round" 
+              stroke-linejoin="round"/>
+        <circle cx="15" cy="15" r="4" fill="{hex_color}"/>
+    </svg>
+    """
+    return urllib.parse.quote(svg)
 
 # Set Mapbox access token (you'll need to get one from https://account.mapbox.com/)
 # For now, we'll use a placeholder - you'll need to replace this with your actual token
@@ -39,19 +62,28 @@ def render_map():
             'mode': agv.operating_mode,
             'theta': agv.theta,
             'color': color,
-            'radius': 10  # Base radius for dynamic scaling (reduced from 50)
+            'radius': 30,  # Base icon size for better zoom scaling
+            'heading': agv.theta * 180 / 3.14159,  # Convert radians to degrees (NED: 0° = North)
+            'icon': {
+                'url': 'data:image/svg+xml;charset=utf-8,' + create_arrow_icon(color),
+                'width': 30,
+                'height': 30,
+                'anchorX': 15,
+                'anchorY': 15
+            }
         })
 
-    # Configure PyDeck layer with dynamic radius based on zoom level
+    # Configure PyDeck layer with arrow icons showing orientation
     layer = pdk.Layer(
-        "ScatterplotLayer",
+        "IconLayer",
         data=map_data,
         get_position=["lon", "lat"],
-        get_color="color",
-        get_radius="radius",  # Use dynamic radius from data
-        radius_scale=1,  # Scale factor
-        radius_min_pixels=4,  # Larger when zoomed out (increased from 2)
-        radius_max_pixels=8,  # Even smaller when zoomed in (decreased from 12)
+        get_icon="icon",
+        get_size="radius",
+        get_angle="heading",  # Rotation angle in degrees
+        size_scale=1,
+        size_min_pixels=12,  # Larger when zoomed out
+        size_max_pixels=32,  # Much larger when zoomed in
         pickable=True,
         auto_highlight=True
     )
@@ -90,7 +122,7 @@ def render_map():
     deck = pdk.Deck(
         layers=[layer],
         initial_view_state=view_state,
-        tooltip={"text": "AGV: {serial}\nBattery: {battery}%\nMode: {mode}"},
+        tooltip={"text": "AGV: {serial}\nBattery: {battery}%\nMode: {mode}\nHeading: {heading}°"},
         map_style="light"  # Use built-in light style
     )
 
