@@ -45,6 +45,29 @@ def render_agv_selection():
         if selected_agv_display and selected_agv_display in agv_options:
             selected_serial = agv_serials[agv_options.index(selected_agv_display)]
             st.session_state['selected_agv'] = selected_serial
+        
+        # Remind user to refresh dashboard for new AGV connections
+        with st.expander("💡 Tips for AGV Selection", expanded=False):
+            st.markdown("""
+            **To see latest AGV connections:**
+            - Click **🔄 Refresh Dashboard** to update the AGV list
+            - New AGVs will appear in the dropdown after refresh
+            - Disconnected AGVs will be removed from the list
+            - The map and details will update automatically
+            """)
+    else:
+        # Show placeholder when no AGV data is available yet
+        st.selectbox(
+            "Select AGV:",
+            options=["No AGVs connected"],
+            index=0,
+            key="agv_selector_key",
+            disabled=True
+        )
+        st.caption("Waiting for AGV connections...")
+        
+        # Remind user to refresh dashboard
+        st.info("💡 **Tip:** Click '🔄 Refresh Dashboard' to update AGV list when new AGVs connect/disconnect")
 
 @st.fragment(run_every="1s")
 def render_fleet_table_fragment():
