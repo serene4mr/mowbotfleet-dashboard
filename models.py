@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Optional, Tuple
+import time
 
 @dataclass
 class ErrorInfo:
@@ -19,5 +20,6 @@ class AGVInfo:
     position: Tuple[float, float]
     theta: float
     last_update: datetime
+    connect_timestamp: float = field(default_factory=time.time)
     current_order: Optional[str] = None
     errors: List[ErrorInfo] = field(default_factory=list)

@@ -10,8 +10,8 @@ from .controls import render_quick_controls
 def render_agv_selection():
     """Render AGV selection dropdown (stable, updates with Refresh Dashboard button)"""
     if fleet_state:
-        # Sort by last update time (most recent first)
-        sorted_agvs = sorted(fleet_state.values(), key=lambda x: x.last_update, reverse=True)
+        # Sort by connection timestamp (first connected first)
+        sorted_agvs = sorted(fleet_state.values(), key=lambda x: x.connect_timestamp)
         
         # Create AGV selection dropdown
         agv_options = [agv.serial for agv in sorted_agvs]
@@ -50,8 +50,8 @@ def render_agv_selection():
 def render_fleet_table_fragment():
     """Render fleet table with real-time updates (fragment)"""
     if fleet_state:
-        # Sort by last update time (most recent first)
-        sorted_agvs = sorted(fleet_state.values(), key=lambda x: x.last_update, reverse=True)
+        # Sort by connection timestamp (first connected first)
+        sorted_agvs = sorted(fleet_state.values(), key=lambda x: x.connect_timestamp)
         
         # Display fleet table (read-only)
         data = [{
