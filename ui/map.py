@@ -55,61 +55,61 @@ def render_map():
     Render interactive map with AGV markers using PyDeck.
     Updates session state when markers are clicked.
     Auto-refreshes every 1 second to show latest AGV positions.
+    Always displays the map, even when no AGVs are connected.
     """
-    if not fleet_state:
-        st.write("No AGVs to display on map.")
-        return
 
     # Prepare data for PyDeck
     map_data = []
     selected_serial = st.session_state.get('selected_agv')
     
-    for agv in fleet_state.values():
-        lat, lon = agv.position
-        is_selected = (agv.serial == selected_serial)
-        
-        # Color based on battery level
-        if agv.battery < 20:
-            color = [255, 0, 0]  # Red for low battery
-        elif agv.battery < 50:
-            color = [255, 165, 0]  # Orange for medium battery
-        else:
-            color = [0, 255, 0]  # Green for good battery
-        
-        # Emphasize selected AGV with brighter color and glow ring
-        if is_selected:
-            radius = 30  # Same size as unselected AGVs
-            # Make color brighter/more vibrant
-            color = [min(255, c + 50) for c in color]
-            icon_width = 30
-            icon_height = 30
-            anchor_x = 15
-            anchor_y = 15
-        else:
-            radius = 30  # Normal size for unselected AGVs
-            icon_width = 30
-            icon_height = 30
-            anchor_x = 15
-            anchor_y = 15
+    # Only process AGVs if they exist
+    if fleet_state:
+        for agv in fleet_state.values():
+            lat, lon = agv.position
+            is_selected = (agv.serial == selected_serial)
             
-        map_data.append({
-            'serial': agv.serial,
-            'lat': lat,
-            'lon': lon,
-            'battery': agv.battery,
-            'mode': agv.operating_mode,
-            'theta': agv.theta,
-            'color': color,
-            'radius': radius,
-            'heading': agv.theta * 180 / 3.14159,  # Convert radians to degrees (NED: 0° = North)
-            'icon': {
-                'url': 'data:image/svg+xml;charset=utf-8,' + create_arrow_icon(color, is_selected),
-                'width': icon_width,
-                'height': icon_height,
-                'anchorX': anchor_x,
-                'anchorY': anchor_y
-            }
-        })
+            # Color based on battery level
+            if agv.battery < 20:
+                color = [255, 0, 0]  # Red for low battery
+            elif agv.battery < 50:
+                color = [255, 165, 0]  # Orange for medium battery
+            else:
+                color = [0, 255, 0]  # Green for good battery
+            
+            # Emphasize selected AGV with brighter color and glow ring
+            if is_selected:
+                radius = 30  # Same size as unselected AGVs
+                # Make color brighter/more vibrant
+                color = [min(255, c + 50) for c in color]
+                icon_width = 30
+                icon_height = 30
+                anchor_x = 15
+                anchor_y = 15
+            else:
+                radius = 30  # Normal size for unselected AGVs
+                icon_width = 30
+                icon_height = 30
+                anchor_x = 15
+                anchor_y = 15
+                
+            map_data.append({
+                'serial': agv.serial,
+                'lat': lat,
+                'lon': lon,
+                'battery': agv.battery,
+                'mode': agv.operating_mode,
+                'theta': agv.theta,
+                'color': color,
+                'radius': radius,
+                'heading': agv.theta * 180 / 3.14159,  # Convert radians to degrees (NED: 0° = North)
+                'icon': {
+                    'url': 'data:image/svg+xml;charset=utf-8,' + create_arrow_icon(color, is_selected),
+                    'width': icon_width,
+                    'height': icon_height,
+                    'anchorX': anchor_x,
+                    'anchorY': anchor_y
+                }
+            })
 
     # Configure PyDeck layer with arrow icons showing orientation
     layer = pdk.Layer(
