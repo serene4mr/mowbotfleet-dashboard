@@ -6,7 +6,8 @@ from config import load_config, get_broker_url
 from auth import ensure_default_admin
 from mqtt_client import connect, connected
 from ui.login import render_login
-from ui.layout import render_sidebar, render_dashboard, render_settings
+from ui.layout import render_sidebar, render_dashboard
+from ui.settings import render_settings
 
 st.set_page_config(page_title="MowbotFleet", layout="wide")
 
