@@ -4,7 +4,7 @@ import streamlit as st
 import asyncio
 from config import load_config, get_broker_url
 from auth import ensure_default_admin
-from mqtt_client import connect, connected
+from mqtt_client import connect, is_connected
 from ui.login import render_login
 from ui.layout import render_sidebar, render_dashboard
 from ui.settings import render_settings
@@ -19,19 +19,17 @@ if "user" not in st.session_state:
     render_login()
     st.stop()
 
-# Sidebar and routing
 page = render_sidebar()
 
-# Auto-connect to broker on non-Settings pages if not already connected
-if page != "Settings" and not connected:
+if page != "Settings" and not is_connected():
     cfg = load_config()
-    broker_url = get_broker_url(cfg)
-    # Run connect coroutine directly
     asyncio.run(connect(
-        broker_url, cfg["broker_user"], cfg["broker_pass"], client_id="MowbotFleet"
+        get_broker_url(cfg),
+        cfg["broker_user"],
+        cfg["broker_pass"],
+        client_id="MowbotFleet"
     ))
 
-# Render selected page
 if page == "Dashboard":
     render_dashboard()
 elif page == "Settings":

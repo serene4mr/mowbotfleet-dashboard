@@ -81,5 +81,5 @@ def get_broker_url(config: Dict[str, Any]) -> str:
     Returns:
         Complete MQTT broker URL
     """
-    scheme = "mqtts" if config["use_tls"] else "mqtt"
-    return f"{scheme}://{config['broker_host']}:{config['broker_port']}"
+    # For VDA5050 client, try just the host:port format
+    return f"{config['broker_host']}:{config['broker_port']}"

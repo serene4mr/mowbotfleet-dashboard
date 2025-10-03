@@ -1,19 +1,29 @@
 # ui/dashboard.py
 
 import streamlit as st
+from mqtt_client import fleet_state, is_connected
 
 def render_header():
     st.markdown("### Dashboard")
-    status = "🟢 Connected" if st.session_state.get("user") and st.query_params.get("connected", "false") == "true" else "🔴 Disconnected"
+    status = "🟢 Connected" if is_connected() else "🔴 Disconnected"
     st.write(f"**Broker Status:** {status}")
 
 def render_row1():
     st.subheader("Fleet Overview & Map")
     col1, col2 = st.columns(2)
     with col1:
-        st.write("Fleet Table (placeholder)")
+        if fleet_state:
+            data = [{
+                "Serial": agv.serial,
+                "Battery (%)": f"{agv.battery:.1f}",
+                "Operating Mode": agv.operating_mode,
+                "Last Update": agv.last_update.strftime("%H:%M:%S")
+            } for agv in fleet_state.values()]
+            st.table(data)
+        else:
+            st.write("No AGV data available.")
     with col2:
-        st.write("Map View (placeholder)")
+        st.write("Map View (to be implemented)")
 
 def render_row2():
     st.subheader("AGV Details & Quick Controls")

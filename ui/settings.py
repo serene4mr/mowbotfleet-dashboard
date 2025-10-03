@@ -26,8 +26,12 @@ def render_settings():
         save_config(new_cfg)
 
         # Reconnect MQTT synchronously
-        asyncio.run(disconnect())
-        asyncio.run(connect(get_broker_url(new_cfg), buser, bpass, client_id="MowbotFleet"))
+        try:
+            asyncio.run(disconnect())
+            asyncio.run(connect(get_broker_url(new_cfg), buser, bpass, client_id="MowbotFleet"))
+        except Exception as e:
+            st.error(f"Reconnection failed: {e}")
+            # Continue anyway to save the config
 
         st.success("Broker settings saved and reconnected.")
         # Rerun to update header
