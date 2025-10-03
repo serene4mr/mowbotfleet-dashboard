@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+venv/
+.env
+
+# Config files with credentials
+config_local.yaml
+
+# Streamlit
+.streamlit/
+
+# IDE
+.vscode/
+.idea/
