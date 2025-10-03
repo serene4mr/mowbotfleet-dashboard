@@ -4,6 +4,7 @@ import streamlit as st
 from datetime import datetime
 from mqtt_client import fleet_state
 
+@st.fragment(run_every="1s")
 def render_agv_details():
     """
     Render detailed information panel for selected AGV.

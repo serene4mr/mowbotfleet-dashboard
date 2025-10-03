@@ -3,6 +3,7 @@
 import streamlit as st
 from mqtt_client import fleet_state
 
+@st.fragment(run_every="1s")
 def render_quick_controls():
     """
     Render quick control buttons for selected AGV.

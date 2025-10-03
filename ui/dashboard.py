@@ -7,6 +7,74 @@ from .map import render_map
 from .agv_details import render_agv_details
 from .controls import render_quick_controls
 
+def render_agv_selection():
+    """Render AGV selection dropdown (stable, updates with Refresh Dashboard button)"""
+    if fleet_state:
+        # Sort by last update time (most recent first)
+        sorted_agvs = sorted(fleet_state.values(), key=lambda x: x.last_update, reverse=True)
+        
+        # Create AGV selection dropdown
+        agv_options = [agv.serial for agv in sorted_agvs]
+        agv_serials = [agv.serial for agv in sorted_agvs]
+        
+        # Initialize session state
+        if 'selected_agv' not in st.session_state:
+            st.session_state['selected_agv'] = agv_serials[0] if agv_serials else None
+        
+        # Auto-fallback logic: only if selected AGV is truly disconnected (serial not in list)
+        current_selection = st.session_state.get('selected_agv')
+        current_agv_serials = [agv.serial for agv in sorted_agvs]
+        if current_selection and current_selection not in current_agv_serials and agv_serials:
+            st.session_state['selected_agv'] = agv_serials[0]
+            current_selection = agv_serials[0]
+        
+        # Get current selection index
+        default_idx = 0
+        if current_selection and current_selection in agv_serials:
+            default_idx = agv_serials.index(current_selection)
+        
+        # Create selectbox with one-click selection
+        selected_agv_display = st.selectbox(
+            "Select AGV:",
+            options=agv_options,
+            index=default_idx,
+            key="agv_selector_key"
+        )
+        
+        # Update session state directly (one-click selection)
+        if selected_agv_display and selected_agv_display in agv_options:
+            selected_serial = agv_serials[agv_options.index(selected_agv_display)]
+            st.session_state['selected_agv'] = selected_serial
+
+@st.fragment(run_every="1s")
+def render_fleet_table_fragment():
+    """Render fleet table with real-time updates (fragment)"""
+    if fleet_state:
+        # Sort by last update time (most recent first)
+        sorted_agvs = sorted(fleet_state.values(), key=lambda x: x.last_update, reverse=True)
+        
+        # Display fleet table (read-only)
+        data = [{
+            "Serial": agv.serial,
+            "Battery (%)": f"{agv.battery:.1f}",
+            "Operating Mode": agv.operating_mode,
+            "Alerts": len(agv.errors),
+            "Last Update": agv.last_update.strftime("%H:%M:%S")
+        } for agv in sorted_agvs]
+        
+        st.dataframe(
+            data,
+            width='stretch',
+            hide_index=True
+        )
+        
+        # Show total count and update time
+        from datetime import datetime
+        st.caption(f"Total AGVs: {len(fleet_state)} | Updated: {datetime.now().strftime('%H:%M:%S')}")
+    else:
+        st.write("No AGV data available.")
+        st.caption("Waiting for AGV state messages...")
+
 def render_header():
     st.markdown("### Dashboard")
     col1, col2, col3 = st.columns(3)
@@ -33,61 +101,11 @@ def render_row1():
     col1, col2 = st.columns(2)
     
     with col1:
-        # Fleet table with selection
-        if fleet_state:
-            # Sort by last update time (most recent first)
-            sorted_agvs = sorted(fleet_state.values(), key=lambda x: x.last_update, reverse=True)
-            
-            # Create AGV selection dropdown
-            agv_options = [f"{agv.serial} (Battery: {agv.battery:.1f}%)" for agv in sorted_agvs]
-            agv_serials = [agv.serial for agv in sorted_agvs]
-            
-            def update_agv_selection():
-                """Callback function to handle AGV selection changes"""
-                selected_display = st.session_state.agv_selector_key
-                if selected_display:
-                    selected_serial = agv_serials[agv_options.index(selected_display)]
-                    st.session_state['selected_agv'] = selected_serial
-            
-            # Initialize session state
-            if 'selected_agv' not in st.session_state:
-                st.session_state['selected_agv'] = agv_serials[0] if agv_serials else None
-            
-            # Get current selection index
-            current_selection = st.session_state.get('selected_agv')
-            default_idx = 0
-            if current_selection and current_selection in agv_serials:
-                default_idx = agv_serials.index(current_selection)
-            
-            # Create selectbox with callback
-            selected_agv_display = st.selectbox(
-                "Select AGV:",
-                options=agv_options,
-                index=default_idx,
-                key="agv_selector_key",
-                on_change=update_agv_selection
-            )
-            
-            # Display fleet table (read-only)
-            data = [{
-                "Serial": agv.serial,
-                "Battery (%)": f"{agv.battery:.1f}",
-                "Operating Mode": agv.operating_mode,
-                "Alerts": len(agv.errors),
-                "Last Update": agv.last_update.strftime("%H:%M:%S")
-            } for agv in sorted_agvs]
-            
-            st.dataframe(
-                data,
-                width='stretch',
-                hide_index=True
-            )
-            
-            # Show total count
-            st.caption(f"Total AGVs: {len(fleet_state)}")
-        else:
-            st.write("No AGV data available.")
-            st.caption("Waiting for AGV state messages...")
+        # AGV selection (stable, updates with Refresh Dashboard button)
+        render_agv_selection()
+        
+        # Fleet table (auto-updates)
+        render_fleet_table_fragment()
     
     with col2:
         render_map()
