@@ -4,6 +4,10 @@ import streamlit as st
 import pydeck as pdk
 from mqtt_client import fleet_state
 
+# Set Mapbox access token (you'll need to get one from https://account.mapbox.com/)
+# For now, we'll use a placeholder - you'll need to replace this with your actual token
+# pdk.settings.mapbox_key = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw"
+
 def render_map():
     """
     Render interactive map with AGV markers using PyDeck.
@@ -32,16 +36,20 @@ def render_map():
             'battery': agv.battery,
             'mode': agv.operating_mode,
             'theta': agv.theta,
-            'color': color
+            'color': color,
+            'radius': 10  # Base radius for dynamic scaling (reduced from 50)
         })
 
-    # Configure PyDeck layer
+    # Configure PyDeck layer with dynamic radius based on zoom level
     layer = pdk.Layer(
         "ScatterplotLayer",
         data=map_data,
         get_position=["lon", "lat"],
         get_color="color",
-        get_radius=50,
+        get_radius="radius",  # Use dynamic radius from data
+        radius_scale=1,  # Scale factor
+        radius_min_pixels=4,  # Larger when zoomed out (increased from 2)
+        radius_max_pixels=8,  # Even smaller when zoomed in (decreased from 12)
         pickable=True,
         auto_highlight=True
     )
@@ -62,11 +70,12 @@ def render_map():
             pitch=0
         )
 
-    # Create and display map
+    # Create and display map with default style (no token required)
     deck = pdk.Deck(
         layers=[layer],
         initial_view_state=view_state,
-        tooltip={"text": "AGV: {serial}\nBattery: {battery}%\nMode: {mode}"}
+        tooltip={"text": "AGV: {serial}\nBattery: {battery}%\nMode: {mode}"},
+        map_style="light"  # Use built-in light style
     )
 
     # Display map
