@@ -42,26 +42,31 @@ def render_row1():
             agv_options = [f"{agv.serial} (Battery: {agv.battery:.1f}%)" for agv in sorted_agvs]
             agv_serials = [agv.serial for agv in sorted_agvs]
             
-            # Default selection
-            default_idx = 0
+            def update_agv_selection():
+                """Callback function to handle AGV selection changes"""
+                selected_display = st.session_state.agv_selector_key
+                if selected_display:
+                    selected_serial = agv_serials[agv_options.index(selected_display)]
+                    st.session_state['selected_agv'] = selected_serial
+            
+            # Initialize session state
+            if 'selected_agv' not in st.session_state:
+                st.session_state['selected_agv'] = agv_serials[0] if agv_serials else None
+            
+            # Get current selection index
             current_selection = st.session_state.get('selected_agv')
+            default_idx = 0
             if current_selection and current_selection in agv_serials:
                 default_idx = agv_serials.index(current_selection)
             
-            # AGV selection dropdown
+            # Create selectbox with callback
             selected_agv_display = st.selectbox(
                 "Select AGV:",
                 options=agv_options,
                 index=default_idx,
-                key="agv_selector"
+                key="agv_selector_key",
+                on_change=update_agv_selection
             )
-            
-            # Update session state when selection changes
-            if selected_agv_display:
-                selected_serial = agv_serials[agv_options.index(selected_agv_display)]
-                if st.session_state.get('selected_agv') != selected_serial:
-                    st.session_state['selected_agv'] = selected_serial
-                    st.success(f"Selected AGV: {selected_serial}")
             
             # Display fleet table (read-only)
             data = [{
