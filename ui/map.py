@@ -99,8 +99,8 @@ def render_map():
     
     # Show last update time
     from datetime import datetime
-    st.caption(f"Map updated: {datetime.now().strftime('%H:%M:%S')}")
-    
+    st.caption(f"Map updated: {datetime.now().strftime('%H:%M:%S')}")    
     # Note: PyDeck selection handling is complex in Streamlit
     # For now, we'll rely on the fleet table for AGV selection
     # TODO: Implement proper map marker selection
+
