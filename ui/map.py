@@ -49,12 +49,12 @@ def create_arrow_icon(color, is_selected=False):
 # For now, we'll use a placeholder - you'll need to replace this with your actual token
 # pdk.settings.mapbox_key = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw"
 
-@st.fragment(run_every="2s")
+@st.fragment(run_every="1s")
 def render_map():
     """
     Render interactive map with AGV markers using PyDeck.
     Updates session state when markers are clicked.
-    Auto-refreshes every 2 seconds to show latest AGV positions.
+    Auto-refreshes every 1 second to show latest AGV positions.
     """
     if not fleet_state:
         st.write("No AGVs to display on map.")
