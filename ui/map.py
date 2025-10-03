@@ -8,10 +8,12 @@ from mqtt_client import fleet_state
 # For now, we'll use a placeholder - you'll need to replace this with your actual token
 # pdk.settings.mapbox_key = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw"
 
+@st.fragment(run_every="2s")
 def render_map():
     """
     Render interactive map with AGV markers using PyDeck.
     Updates session state when markers are clicked.
+    Auto-refreshes every 2 seconds to show latest AGV positions.
     """
     if not fleet_state:
         st.write("No AGVs to display on map.")
@@ -80,6 +82,10 @@ def render_map():
 
     # Display map
     st.pydeck_chart(deck)
+    
+    # Show last update time
+    from datetime import datetime
+    st.caption(f"Map updated: {datetime.now().strftime('%H:%M:%S')}")
     
     # Note: PyDeck selection handling is complex in Streamlit
     # For now, we'll rely on the fleet table for AGV selection
