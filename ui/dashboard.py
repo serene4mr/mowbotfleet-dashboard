@@ -100,6 +100,17 @@ def render_fleet_table_fragment():
 
 def render_header():
     st.markdown("### Dashboard")
+    
+    # Auto-updating status section (fragment)
+    render_header_status()
+    
+    # Manual refresh button
+    if st.button("🔄 Refresh Dashboard"):
+        st.rerun()
+
+@st.fragment(run_every="1s")
+def render_header_status():
+    """Render header status that auto-updates every second"""
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -113,10 +124,6 @@ def render_header():
     with col3:
         error_count = sum(len(agv.errors) for agv in fleet_state.values())
         st.write(f"**Alerts:** {error_count}")
-    
-    # Manual refresh button
-    if st.button("🔄 Refresh Dashboard"):
-        st.rerun()
 
 def render_row1():
     """Fleet Overview & Map"""
