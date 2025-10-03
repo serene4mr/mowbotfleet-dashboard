@@ -2,101 +2,115 @@
 
 import streamlit as st
 import time
+from datetime import datetime
 from mqtt_client import fleet_state, is_connected, get_debug_info
 from .map import render_map
 from .agv_details import render_agv_details
 from .controls import render_quick_controls
 
-def render_agv_selection():
-    """Render AGV selection dropdown (stable, updates with Refresh Dashboard button)"""
-    if fleet_state:
-        # Sort by connection timestamp (first connected first)
-        sorted_agvs = sorted(fleet_state.values(), key=lambda x: x.connect_timestamp)
-        
-        # Create AGV selection dropdown
-        agv_options = [agv.serial for agv in sorted_agvs]
-        agv_serials = [agv.serial for agv in sorted_agvs]
-        
-        # Initialize session state
-        if 'selected_agv' not in st.session_state:
-            st.session_state['selected_agv'] = agv_serials[0] if agv_serials else None
-        
-        # Auto-fallback logic: only if selected AGV is truly disconnected (serial not in list)
-        current_selection = st.session_state.get('selected_agv')
-        current_agv_serials = [agv.serial for agv in sorted_agvs]
-        if current_selection and current_selection not in current_agv_serials and agv_serials:
-            st.session_state['selected_agv'] = agv_serials[0]
-            current_selection = agv_serials[0]
-        
-        # Get current selection index
-        default_idx = 0
-        if current_selection and current_selection in agv_serials:
-            default_idx = agv_serials.index(current_selection)
-        
-        # Create selectbox with one-click selection
-        selected_agv_display = st.selectbox(
-            "Select AGV:",
-            options=agv_options,
-            index=default_idx,
-            key="agv_selector_key"
-        )
-        
-        # Update session state directly (one-click selection)
-        if selected_agv_display and selected_agv_display in agv_options:
-            selected_serial = agv_serials[agv_options.index(selected_agv_display)]
-            st.session_state['selected_agv'] = selected_serial
-        
-        # Remind user to refresh dashboard for new AGV connections
-        with st.expander("💡 Tips for AGV Selection", expanded=False):
-            st.markdown("""
-            **To see latest AGV connections:**
-            - Click **🔄 Refresh Dashboard** to update the AGV list
-            - New AGVs will appear in the dropdown after refresh
-            - Disconnected AGVs will be removed from the list
-            - The map and details will update automatically
-            """)
-    else:
-        # Show placeholder when no AGV data is available yet
-        st.selectbox(
-            "Select AGV:",
-            options=["No AGVs connected"],
-            index=0,
-            key="agv_selector_key",
-            disabled=True
-        )
-        st.caption("Waiting for AGV connections...")
-        
-        # Remind user to refresh dashboard
-        st.info("💡 **Tip:** Click '🔄 Refresh Dashboard' to update AGV list when new AGVs connect/disconnect")
 
 @st.fragment(run_every="1s")
-def render_fleet_table_fragment():
-    """Render fleet table with real-time updates (fragment)"""
-    if fleet_state:
-        # Sort by connection timestamp (first connected first)
-        sorted_agvs = sorted(fleet_state.values(), key=lambda x: x.connect_timestamp)
+def render_fleet_table():
+    """Render fleet table with AGV selection checkboxes (auto-refresh every 1s)"""
+    # Get current fleet state (handle empty state gracefully)
+    current_fleet_state = fleet_state or {}
+    
+    # Sort by connection timestamp (first connected first)
+    sorted_agvs = sorted(current_fleet_state.values(), key=lambda x: x.connect_timestamp)
+    
+    # Always show the header
+    st.markdown("**Select AGV:**")
+    
+    if sorted_agvs:
+        # Show table header (compact)
+        col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
+        with col1:
+            st.markdown("**Serial**")
+        with col2:
+            st.markdown("**Battery**")
+        with col3:
+            st.markdown("**Mode**")
+        with col4:
+            st.markdown("**Alerts**")
+        with col5:
+            st.markdown("**Last Update**")
+        # Initialize selected AGV if not set
+        if 'selected_agv' not in st.session_state:
+            st.session_state['selected_agv'] = sorted_agvs[0].serial
         
-        # Display fleet table (read-only)
-        data = [{
-            "Serial": agv.serial,
-            "Battery (%)": f"{agv.battery:.1f}",
-            "Operating Mode": agv.operating_mode,
-            "Alerts": len(agv.errors),
-            "Last Update": agv.last_update.strftime("%H:%M:%S")
-        } for agv in sorted_agvs]
+        # Check if currently selected AGV is still available
+        current_selection = st.session_state.get('selected_agv')
+        available_serials = [agv.serial for agv in sorted_agvs]
         
-        st.dataframe(
-            data,
-            width='stretch',
-            hide_index=True
-        )
+        # Auto-fallback if selected AGV is no longer available
+        if current_selection and current_selection not in available_serials and available_serials:
+            st.session_state['selected_agv'] = available_serials[0]
+            current_selection = available_serials[0]
+        
+        selected_agv = None
+        
+        for i, agv in enumerate(sorted_agvs):
+            col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
+            
+            with col1:
+                # Radio button with AGV serial as the option (no separate serial column)
+                is_selected = st.radio(
+                    f"Select {agv.serial}",
+                    options=[agv.serial],
+                    index=0 if agv.serial == current_selection else None,
+                    key=f"agv_radio_{agv.serial}",
+                    label_visibility="collapsed"
+                )
+                if is_selected and is_selected != current_selection:
+                    st.session_state['selected_agv'] = is_selected
+                    selected_agv = is_selected
+            
+            with col2:
+                st.write(f"{agv.battery:.1f}%")
+            
+            with col3:
+                st.write(agv.operating_mode)
+            
+            with col4:
+                alert_count = len(agv.errors)
+                if alert_count > 0:
+                    st.write(f"🔴 {alert_count}")
+                else:
+                    st.write("✅ 0")
+            
+            with col5:
+                st.write(agv.last_update.strftime("%H:%M:%S"))
+        
+        # Update session state if selection changed
+        if selected_agv:
+            st.session_state['selected_agv'] = selected_agv
         
         # Show total count and update time
-        from datetime import datetime
-        st.caption(f"Total AGVs: {len(fleet_state)} | Updated: {datetime.now().strftime('%H:%M:%S')}")
+        st.caption(f"Total AGVs: {len(current_fleet_state)} | Updated: {datetime.now().strftime('%H:%M:%S')}")
+        
+        # Show tips for AGV selection
+        with st.expander("💡 Tips for AGV Selection", expanded=False):
+            st.markdown("""
+            **AGV Selection:**
+            - Click the radio button next to an AGV to select it
+            - Selected AGV will be highlighted on the map
+            - Selection is remembered even when the table refreshes
+            - If selected AGV disconnects, it auto-selects the first available AGV
+            """)
     else:
-        st.write("No AGV data available.")
-        st.caption("Waiting for AGV state messages...")
+        # Show placeholder when no AGVs are connected
+        st.write("No AGVs connected")
+        st.caption("Waiting for AGV connections...")
+        
+        # Show tips for AGV selection even when no AGVs
+        with st.expander("💡 Tips for AGV Selection", expanded=False):
+            st.markdown("""
+            **AGV Selection:**
+            - AGVs will appear here when they connect to the broker
+            - Click the radio button next to an AGV to select it
+            - Selected AGV will be highlighted on the map
+            - Selection is remembered even when the table refreshes
+            """)
 
 def render_header():
     st.markdown("### Dashboard")
@@ -131,11 +145,8 @@ def render_row1():
     col1, col2 = st.columns(2)
     
     with col1:
-        # AGV selection (stable, updates with Refresh Dashboard button)
-        render_agv_selection()
-        
-        # Fleet table (auto-updates)
-        render_fleet_table_fragment()
+        # Fleet table with AGV selection (auto-refresh every 1s)
+        render_fleet_table()
     
     with col2:
         render_map()
