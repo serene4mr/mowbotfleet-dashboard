@@ -1,0 +1,19 @@
+# Core application framework
+streamlit>=1.28.0
+
+# VDA5050 client from specific repository
+git+https://github.com/zeki-aitech/vda5050_client.git
+
+# MQTT communication
+paho-mqtt>=1.6.1
+
+# Configuration and security
+pyyaml>=6.0
+bcrypt>=4.0.1
+
+# Data handling and visualization
+pandas>=2.0.3
+pydeck>=0.8.1
+
+# Development and testing
+pytest>=7.4.0
