@@ -3,51 +3,100 @@
 import streamlit as st
 import time
 from mqtt_client import fleet_state, is_connected, get_debug_info
+from .map import render_map
+from .agv_details import render_agv_details
+from .controls import render_quick_controls
 
 def render_header():
     st.markdown("### Dashboard")
-    status = "🟢 Connected" if is_connected() else "🔴 Disconnected"
-    st.write(f"**Broker Status:** {status}")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        status = "🟢 Connected" if is_connected() else "🔴 Disconnected"
+        st.write(f"**Broker:** {status}")
+    
+    with col2:
+        online_count = len(fleet_state)
+        st.write(f"**Fleet:** {online_count} Online")
+    
+    with col3:
+        error_count = sum(len(agv.errors) for agv in fleet_state.values())
+        st.write(f"**Alerts:** {error_count}")
     
     # Manual refresh button
     if st.button("🔄 Refresh Dashboard"):
         st.rerun()
 
 def render_row1():
+    """Fleet Overview & Map"""
     st.subheader("Fleet Overview & Map")
     col1, col2 = st.columns(2)
+    
     with col1:
+        # Fleet table with selection
         if fleet_state:
             # Sort by last update time (most recent first)
             sorted_agvs = sorted(fleet_state.values(), key=lambda x: x.last_update, reverse=True)
+            
+            # Create AGV selection dropdown
+            agv_options = [f"{agv.serial} (Battery: {agv.battery:.1f}%)" for agv in sorted_agvs]
+            agv_serials = [agv.serial for agv in sorted_agvs]
+            
+            # Default selection
+            default_idx = 0
+            current_selection = st.session_state.get('selected_agv')
+            if current_selection and current_selection in agv_serials:
+                default_idx = agv_serials.index(current_selection)
+            
+            # AGV selection dropdown
+            selected_agv_display = st.selectbox(
+                "Select AGV:",
+                options=agv_options,
+                index=default_idx,
+                key="agv_selector"
+            )
+            
+            # Update session state when selection changes
+            if selected_agv_display:
+                selected_serial = agv_serials[agv_options.index(selected_agv_display)]
+                if st.session_state.get('selected_agv') != selected_serial:
+                    st.session_state['selected_agv'] = selected_serial
+                    st.success(f"Selected AGV: {selected_serial}")
+            
+            # Display fleet table (read-only)
             data = [{
                 "Serial": agv.serial,
                 "Battery (%)": f"{agv.battery:.1f}",
                 "Operating Mode": agv.operating_mode,
+                "Alerts": len(agv.errors),
                 "Last Update": agv.last_update.strftime("%H:%M:%S")
             } for agv in sorted_agvs]
-            st.table(data)
+            
+            st.dataframe(
+                data,
+                width='stretch',
+                hide_index=True
+            )
             
             # Show total count
             st.caption(f"Total AGVs: {len(fleet_state)}")
         else:
             st.write("No AGV data available.")
             st.caption("Waiting for AGV state messages...")
+    
     with col2:
-        st.write("Map View (to be implemented)")
-        if fleet_state:
-            # Show position data for debugging
-            st.write("**AGV Positions:**")
-            for agv in fleet_state.values():
-                st.write(f"• {agv.serial}: ({agv.position[0]:.2f}, {agv.position[1]:.2f}) θ={agv.theta:.2f}")
+        render_map()
 
 def render_row2():
+    """AGV Details & Quick Controls"""
     st.subheader("AGV Details & Quick Controls")
-    col1, col2 = st.columns([3,1])
+    col1, col2 = st.columns([3, 1])
+    
     with col1:
-        st.write("AGV Details (placeholder)")
+        render_agv_details()
+    
     with col2:
-        st.write("Controls: [🛑 E-STOP] [▶️ Resume] [⏸️ Pause] [🔄]")
+        render_quick_controls()
 
 def render_row3():
     st.subheader("Mission Dispatch")
