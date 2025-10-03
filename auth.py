@@ -21,10 +21,19 @@ def verify_user(username: str, password: str) -> bool:
 
 def add_or_update_user(username: str, password: str) -> None:
     """
-    Add a new user or update existing user’s password hash.
+    Add a new user or update existing user's password hash.
     """
     cfg = load_config()
     users: Dict[str,str] = cfg.setdefault("users", {})
     new_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     users[username] = new_hash
     save_config(cfg)
+
+def ensure_default_admin() -> None:
+    """
+    Ensure default admin user exists. Call this after config is loaded.
+    """
+    cfg = load_config()
+    if not cfg.get("users"):
+        add_or_update_user("admin", "admin")
+        print("⚠️ Seeded default admin user; please change the password ASAP.")
