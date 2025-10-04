@@ -13,17 +13,26 @@ def render_settings():
     # Load and display current broker config
     cfg = load_config()
     st.subheader("Broker Configuration")
-    host = st.text_input("Broker Host", value=cfg["broker_host"])
-    port = st.number_input("Broker Port", value=cfg["broker_port"])
-    use_tls = st.checkbox("Use TLS", value=cfg["use_tls"])
-    buser = st.text_input("Broker Username", value=cfg["broker_user"])
-    bpass = st.text_input("Broker Password", type="password", value=cfg["broker_pass"])
+    host = st.text_input("Broker Host", value=cfg["broker"]["host"])
+    port = st.number_input("Broker Port", value=cfg["broker"]["port"])
+    use_tls = st.checkbox("Use TLS", value=cfg["broker"]["use_tls"])
+    buser = st.text_input("Broker Username", value=cfg["broker"]["user"])
+    bpass = st.text_input("Broker Password", type="password", value=cfg["broker"]["password"])
 
     if st.button("💾 Save & Reconnect"):
-        # Persist new broker settings
-        new_cfg = {**cfg, "broker_host": host, "broker_port": port,
-                   "use_tls": use_tls, "broker_user": buser, "broker_pass": bpass}
-        save_config(new_cfg)
+        # Update broker settings in nested structure
+        new_cfg = cfg.copy()
+        new_cfg["broker"]["host"] = host
+        new_cfg["broker"]["port"] = port
+        new_cfg["broker"]["use_tls"] = use_tls
+        new_cfg["broker"]["user"] = buser
+        new_cfg["broker"]["password"] = bpass
+        
+        # Save only the broker settings (not the full config)
+        broker_config = {
+            "broker": new_cfg["broker"]
+        }
+        save_config(broker_config)
 
         # Reconnect MQTT synchronously
         try:
