@@ -30,9 +30,10 @@ if page != "Settings" and not is_connected():
         client_id="MowbotFleet"
     ))
 
-    if page == "Dashboard":
-        render_dashboard()
-    elif page == "Missions":
-        render_missions_page()
-    elif page == "Settings":
-        render_settings()
+# Render the selected page
+if page == "Dashboard":
+    render_dashboard()
+elif page == "Missions":
+    render_missions_page()
+elif page == "Settings":
+    render_settings()
