@@ -7,11 +7,15 @@ import os
 import yaml
 from pathlib import Path
 from typing import Dict, Any
+from utils.logging_utils import get_logger
+
+# Get logger for config operations
+config_logger = get_logger("config")
 
 def deep_merge(base: Dict, override: Dict) -> Dict:
     """
     Deep merge override dict into base dict.
-    Preserves nested structure for broker.host, logging.modules, etc.
+    Preserves nested structure for broker.host, logging.level, etc.
     
     Args:
         base: Base configuration dictionary
@@ -61,8 +65,8 @@ def load_config() -> Dict[str, Any]:
                 user_config = yaml.safe_load(f) or {}
                 config = deep_merge(config, user_config)
         except yaml.YAMLError as e:
-            print(f"Warning: Invalid config_local.yaml: {e}")
-            print("Using defaults only...")
+            config_logger.warning(f"Invalid config_local.yaml: {e}")
+            config_logger.info("Using defaults only...")
     
     # 3. Environment variable overrides (production/Docker)
     if "BROKER_HOST" in os.environ:
@@ -159,7 +163,7 @@ def validate_config(config: Dict[str, Any]) -> list:
     # Validate logging settings
     logging_config = config.get("logging", {})
     valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-    if logging_config.get("global_level") not in valid_levels:
-        errors.append(f"Logging global_level must be one of: {valid_levels}")
+    if logging_config.get("level") not in valid_levels:
+        errors.append(f"Logging level must be one of: {valid_levels}")
     
     return errors

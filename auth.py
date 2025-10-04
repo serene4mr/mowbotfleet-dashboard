@@ -8,6 +8,10 @@ import bcrypt
 import yaml
 from pathlib import Path
 from typing import Dict
+from utils.logging_utils import get_logger
+
+# Get logger for auth operations
+auth_logger = get_logger("auth")
 
 def get_users_file_path() -> Path:
     """Get the path to the users configuration file."""
@@ -30,7 +34,7 @@ def load_users() -> Dict[str, str]:
             data = yaml.safe_load(f) or {}
             return data.get("users", {})
     except (yaml.YAMLError, IOError) as e:
-        # Could not load users file - return empty dict
+        auth_logger.warning(f"Could not load users file: {e}")
         return {}
 
 def save_users(users: Dict[str, str]) -> None:
@@ -76,9 +80,14 @@ def verify_user(username: str, password: str) -> bool:
         return False
     
     try:
-        return bcrypt.checkpw(password.encode(), hashed.encode())
+        result = bcrypt.checkpw(password.encode(), hashed.encode())
+        if result:
+            auth_logger.info(f"Login successful: {username}")
+        else:
+            auth_logger.warning(f"Login failed: {username} - Invalid password")
+        return result
     except Exception as e:
-        # Password verification failed - return False
+        auth_logger.error(f"Login error: {username} - {e}")
         return False
 
 def add_or_update_user(username: str, password: str) -> None:
@@ -103,6 +112,9 @@ def add_or_update_user(username: str, password: str) -> None:
     
     # Save to file
     save_users(users)
+    
+    # Log the operation
+    auth_logger.info(f"User created/updated: {username}")
 
 def delete_user(username: str) -> bool:
     """
@@ -127,6 +139,9 @@ def delete_user(username: str) -> bool:
     
     # Save to file
     save_users(users)
+    
+    # Log the operation
+    auth_logger.info(f"User deleted: {username}")
     return True
 
 def list_users() -> list:
@@ -148,7 +163,7 @@ def ensure_default_admin() -> None:
     
     if not users:
         add_or_update_user("admin", "admin")
-        # Default admin user created - will be logged when logging system is implemented
+        auth_logger.info("Default admin user created: admin/admin")
 
 def change_password(username: str, old_password: str, new_password: str) -> bool:
     """
@@ -164,8 +179,10 @@ def change_password(username: str, old_password: str, new_password: str) -> bool
     """
     # Verify old password first
     if not verify_user(username, old_password):
+        auth_logger.warning(f"Password change failed: {username} - Old password incorrect")
         return False
     
     # Update with new password
     add_or_update_user(username, new_password)
+    auth_logger.info(f"Password changed successfully: {username}")
     return True

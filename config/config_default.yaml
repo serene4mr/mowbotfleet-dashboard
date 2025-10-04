@@ -14,16 +14,7 @@ broker:
 
 # Logging Configuration (Developer Settings)
 logging:
-  global_level: "INFO"           # Overall logging verbosity (DEBUG/INFO/WARNING/ERROR)
-  modules:
-    MQTT_CLIENT: "INFO"          # MQTT communication logs
-    MISSION_UTILS: "DEBUG"       # Mission parsing and validation
-    MISSION_DISPATCH: "INFO"     # Mission dispatch operations
-    AGV_DETAILS: "WARNING"       # AGV detail panel updates
-    MAP_RENDER: "ERROR"          # Map rendering operations
-    AUTH: "INFO"                 # Authentication and login
-    CONFIG: "INFO"               # Configuration loading
-    UI: "WARNING"                # UI component updates
+  level: "INFO"                  # Console logging level (DEBUG/INFO/WARNING/ERROR)
 
 # Mission Configuration
 mission:
