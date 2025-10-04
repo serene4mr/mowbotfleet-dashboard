@@ -4,7 +4,6 @@ import streamlit as st
 from datetime import datetime
 from mqtt_client import fleet_state
 
-@st.fragment(run_every="1s")
 def render_active_missions():
     """Render active missions table with real-time updates"""
     st.markdown("#### 🔄 Active Missions")
