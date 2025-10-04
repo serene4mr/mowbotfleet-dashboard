@@ -48,5 +48,5 @@ dashboard:
     lat: 37.5075                 # Seoul latitude (example location)
     lon: 127.0567                # Seoul longitude (example location)
 
-# User Management (Initial Setup Only)
-users: {}                        # User accounts (populated by auth.py)
+# User Management
+# Users are stored in config/users.yaml (separate file for security)
