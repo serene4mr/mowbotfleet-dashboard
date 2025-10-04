@@ -2,7 +2,7 @@
 
 import streamlit as st
 import asyncio
-from config import load_config, get_broker_url
+from config import load_config, get_broker_url, get_broker_credentials
 from auth import ensure_default_admin
 from mqtt_client import connect, is_connected
 from ui.login import render_login
@@ -23,10 +23,11 @@ page = render_sidebar()
 
 if page != "Settings" and not is_connected():
     cfg = load_config()
+    username, password = get_broker_credentials(cfg)
     asyncio.run(connect(
         get_broker_url(cfg),
-        cfg["broker_user"],
-        cfg["broker_pass"],
+        username,
+        password,
         client_id="MowbotFleet"
     ))
 
