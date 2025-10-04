@@ -2,46 +2,51 @@
 # This file contains technical defaults set by developers
 # Users should override settings in config_local.yaml
 
+# MQTT Broker Configuration
 broker:
-  host: "127.0.0.1"
-  port: 1883
-  use_tls: false
-  user: ""
-  password: ""
-  keepalive: 60
-  client_id_prefix: "MowbotFleet"
+  host: "127.0.0.1"              # Broker IP address
+  port: 1883                     # Broker port (1883=plain, 8883=TLS)
+  use_tls: false                 # Enable TLS encryption
+  user: ""                       # Broker username (empty for no auth)
+  password: ""                   # Broker password (empty for no auth)
+  keepalive: 60                  # MQTT keepalive interval (seconds)
+  client_id_prefix: "MowbotFleet" # Client ID prefix for connections
 
+# Logging Configuration (Developer Settings)
 logging:
-  global_level: "INFO"
+  global_level: "INFO"           # Overall logging verbosity (DEBUG/INFO/WARNING/ERROR)
   modules:
-    MQTT_CLIENT: "INFO"
-    MISSION_UTILS: "DEBUG"
-    MISSION_DISPATCH: "INFO"
-    AGV_DETAILS: "WARNING"
-    MAP_RENDER: "ERROR"
-    AUTH: "INFO"
-    CONFIG: "INFO"
-    UI: "WARNING"
+    MQTT_CLIENT: "INFO"          # MQTT communication logs
+    MISSION_UTILS: "DEBUG"       # Mission parsing and validation
+    MISSION_DISPATCH: "INFO"     # Mission dispatch operations
+    AGV_DETAILS: "WARNING"       # AGV detail panel updates
+    MAP_RENDER: "ERROR"          # Map rendering operations
+    AUTH: "INFO"                 # Authentication and login
+    CONFIG: "INFO"               # Configuration loading
+    UI: "WARNING"                # UI component updates
 
+# Mission Configuration
 mission:
-  max_nodes_per_mission: 100
-  default_order_prefix: "ORDER"
-  auto_cancel_timeout_minutes: 30
-  node_timeout_seconds: 300
-  coordinate_precision: 3
+  max_nodes_per_mission: 100     # Maximum waypoints per mission
+  default_order_prefix: "ORDER"  # Order ID prefix for missions
+  auto_cancel_timeout_minutes: 30 # Auto-cancel stuck missions after N minutes
+  node_timeout_seconds: 300      # Fleet dashboard timeout monitoring (5 min)
+  coordinate_precision: 3        # Decimal places for coordinates (1mm precision)
 
+# User Interface Configuration
 ui:
-  auto_refresh_interval: 1
-  map_default_zoom: 15
-  table_page_size: 50
-  session_timeout_minutes: 480  # 8 hours
+  auto_refresh_interval: 1       # Dashboard refresh rate (seconds)
+  map_default_zoom: 15           # Default map zoom level (street view)
+  table_page_size: 50            # Rows per page in data tables
+  session_timeout_minutes: 480   # User session timeout (8 hours)
 
+# Dashboard Metadata
 dashboard:
-  manufacturer: "MowbotAI"
-  serial_number: "MowbotFleetClient"
-  map_default_center:
-    lat: 37.5075
-    lon: 127.0567
+  manufacturer: "MowbotAI"       # VDA5050 manufacturer identifier
+  serial_number: "MowbotFleetClient" # VDA5050 client serial number
+  map_default_center:            # Default map center coordinates
+    lat: 37.5075                 # Seoul latitude (example location)
+    lon: 127.0567                # Seoul longitude (example location)
 
-# User management (initial setup only)
-users: {}  # Populated by auth.py functions
+# User Management (Initial Setup Only)
+users: {}                        # User accounts (populated by auth.py)
