@@ -30,7 +30,7 @@ def load_users() -> Dict[str, str]:
             data = yaml.safe_load(f) or {}
             return data.get("users", {})
     except (yaml.YAMLError, IOError) as e:
-        print(f"Warning: Could not load users file: {e}")
+        # Could not load users file - return empty dict
         return {}
 
 def save_users(users: Dict[str, str]) -> None:
@@ -78,7 +78,7 @@ def verify_user(username: str, password: str) -> bool:
     try:
         return bcrypt.checkpw(password.encode(), hashed.encode())
     except Exception as e:
-        print(f"Error verifying password for user {username}: {e}")
+        # Password verification failed - return False
         return False
 
 def add_or_update_user(username: str, password: str) -> None:
@@ -103,8 +103,6 @@ def add_or_update_user(username: str, password: str) -> None:
     
     # Save to file
     save_users(users)
-    
-    print(f"✅ User '{username}' added/updated successfully")
 
 def delete_user(username: str) -> bool:
     """
@@ -129,8 +127,6 @@ def delete_user(username: str) -> bool:
     
     # Save to file
     save_users(users)
-    
-    print(f"✅ User '{username}' deleted successfully")
     return True
 
 def list_users() -> list:
@@ -152,10 +148,7 @@ def ensure_default_admin() -> None:
     
     if not users:
         add_or_update_user("admin", "admin")
-        print("✅ Default admin user created (admin/admin)")
-        print("🔒 Please change the password for production use!")
-    else:
-        print(f"✅ Found {len(users)} existing users")
+        # Default admin user created - will be logged when logging system is implemented
 
 def change_password(username: str, old_password: str, new_password: str) -> bool:
     """
