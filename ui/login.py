@@ -9,17 +9,6 @@ def render_login():
     Render the login screen. On successful login, store user in session and rerun.
     """
     st.title("MowbotFleet Login")
-    
-    # Show default credentials for first-time users
-    with st.expander("ℹ️ First Time Setup", expanded=False):
-        st.markdown("""
-        **Default Admin Credentials:**
-        - Username: `admin`
-        - Password: `admin`
-        
-        🔒 **Important:** Change the password after first login for security!
-        """)
-    
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     

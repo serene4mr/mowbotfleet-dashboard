@@ -68,7 +68,6 @@ broker:
 #     MISSION_UTILS: "DEBUG"
 
 # Note: User accounts are stored in config/users.yaml
-# Default admin user: admin/admin (change password for production!)
 """
     
     try:
