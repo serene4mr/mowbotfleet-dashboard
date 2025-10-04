@@ -1,4 +1,4 @@
-# ui/dashboard.py
+# ui/pages/dashboard.py
 
 import streamlit as st
 import time

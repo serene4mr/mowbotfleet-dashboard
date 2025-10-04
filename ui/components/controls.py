@@ -1,4 +1,4 @@
-# ui/controls.py
+# ui/components/controls.py
 
 import streamlit as st
 from mqtt_client import fleet_state

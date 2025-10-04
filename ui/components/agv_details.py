@@ -1,4 +1,4 @@
-# ui/agv_details.py
+# ui/components/agv_details.py
 
 import streamlit as st
 from datetime import datetime

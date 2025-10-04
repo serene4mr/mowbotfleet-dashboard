@@ -1,4 +1,4 @@
-# ui/map.py
+# ui/components/map.py
 
 import streamlit as st
 import pydeck as pdk

@@ -1,4 +1,4 @@
-# ui/settings.py
+# ui/pages/settings.py
 
 import streamlit as st
 import asyncio
