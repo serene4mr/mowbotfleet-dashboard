@@ -7,7 +7,7 @@ venv/
 .env
 
 # Config files with credentials
-config_local.yaml
+config/config_local.yaml
 
 # Streamlit
 .streamlit/

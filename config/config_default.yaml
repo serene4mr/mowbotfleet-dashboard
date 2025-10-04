@@ -1,0 +1,47 @@
+# MowbotFleet Dashboard - Default Configuration
+# This file contains technical defaults set by developers
+# Users should override settings in config_local.yaml
+
+broker:
+  host: "127.0.0.1"
+  port: 1883
+  use_tls: false
+  user: ""
+  password: ""
+  keepalive: 60
+  client_id_prefix: "MowbotFleet"
+
+logging:
+  global_level: "INFO"
+  modules:
+    MQTT_CLIENT: "INFO"
+    MISSION_UTILS: "DEBUG"
+    MISSION_DISPATCH: "INFO"
+    AGV_DETAILS: "WARNING"
+    MAP_RENDER: "ERROR"
+    AUTH: "INFO"
+    CONFIG: "INFO"
+    UI: "WARNING"
+
+mission:
+  max_nodes_per_mission: 100
+  default_order_prefix: "ORDER"
+  auto_cancel_timeout_minutes: 30
+  node_timeout_seconds: 300
+  coordinate_precision: 3
+
+ui:
+  auto_refresh_interval: 1
+  map_default_zoom: 15
+  table_page_size: 50
+  session_timeout_minutes: 480  # 8 hours
+
+dashboard:
+  manufacturer: "MowbotAI"
+  serial_number: "MowbotFleetClient"
+  map_default_center:
+    lat: 37.5075
+    lon: 127.0567
+
+# User management (initial setup only)
+users: {}  # Populated by auth.py functions
