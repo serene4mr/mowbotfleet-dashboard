@@ -152,8 +152,8 @@ def ensure_default_admin() -> None:
     
     if not users:
         add_or_update_user("admin", "admin")
-        print("⚠️  Seeded default admin user (admin/admin)")
-        print("🔒 Please change the password ASAP for security!")
+        print("✅ Default admin user created (admin/admin)")
+        print("🔒 Please change the password for production use!")
     else:
         print(f"✅ Found {len(users)} existing users")
 
