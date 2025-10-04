@@ -15,3 +15,6 @@ config_local.yaml
 # IDE
 .vscode/
 .idea/
+
+# Testing
+.pytest_cache/
