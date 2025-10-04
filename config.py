@@ -28,14 +28,63 @@ def deep_merge(base: Dict, override: Dict) -> Dict:
             result[key] = value
     return result
 
+def create_local_config_template():
+    """
+    Create a template config_local.yaml file on first run.
+    """
+    local_path = Path("config/config_local.yaml")
+    if local_path.exists():
+        return  # Already exists, don't overwrite
+    
+    # Create config directory if it doesn't exist
+    local_path.parent.mkdir(exist_ok=True)
+    
+    # Template content
+    template_content = """# MowbotFleet Dashboard - Local Configuration
+# Override any settings from config_default.yaml here
+# Only include settings you want to change
+
+# MQTT Broker Settings (REQUIRED)
+broker:
+  host: "127.0.0.1"      # Your MQTT broker IP
+  port: 1883             # Use 8883 for TLS, 1883 for plain
+  use_tls: false         # Enable for production
+  user: ""               # Your broker username  
+  password: ""           # Your broker password
+
+# Optional: Adjust mission limits
+# mission:
+#   max_nodes_per_mission: 50
+
+# Optional: UI customization  
+# ui:
+#   auto_refresh_interval: 2
+#   map_default_zoom: 12
+
+# Optional: Logging (for debugging)
+# logging:
+#   global_level: "DEBUG"
+#   modules:
+#     MISSION_UTILS: "DEBUG"
+"""
+    
+    try:
+        with open(local_path, 'w') as f:
+            f.write(template_content)
+        print(f"✅ Created config template: {local_path}")
+        print("📝 Edit config/config_local.yaml to customize your settings")
+    except IOError as e:
+        print(f"Warning: Could not create config template: {e}")
+
 def load_config() -> Dict[str, Any]:
     """
     Load configuration with hierarchy: defaults + user overrides + environment variables.
     
     Loading order:
     1. Load config/config_default.yaml (developer defaults)
-    2. Load config/config_local.yaml (user overrides)
-    3. Apply environment variable overrides
+    2. Create template config_local.yaml if missing (first run)
+    3. Load config/config_local.yaml (user overrides)
+    4. Apply environment variable overrides
     
     Returns:
         Complete configuration dictionary
@@ -52,7 +101,10 @@ def load_config() -> Dict[str, Any]:
     with open(defaults_path) as f:
         config = yaml.safe_load(f) or {}
     
-    # 2. Load user overrides (optional)
+    # 2. Create local config template if missing (first run)
+    create_local_config_template()
+    
+    # 3. Load user overrides (now guaranteed to exist)
     local_path = Path("config/config_local.yaml")
     if local_path.exists():
         try:
@@ -63,7 +115,7 @@ def load_config() -> Dict[str, Any]:
             print(f"Warning: Invalid config_local.yaml: {e}")
             print("Using defaults only...")
     
-    # 3. Environment variable overrides (production/Docker)
+    # 4. Environment variable overrides (production/Docker)
     if "BROKER_HOST" in os.environ:
         config["broker"]["host"] = os.environ["BROKER_HOST"]
     if "BROKER_PORT" in os.environ:
