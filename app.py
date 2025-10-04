@@ -6,8 +6,8 @@ from config import load_config, get_broker_url
 from auth import ensure_default_admin
 from mqtt_client import connect, is_connected
 from ui.login import render_login
-from ui.layout import render_sidebar, render_dashboard
-from ui.settings import render_settings
+from ui.layout import render_sidebar, render_dashboard, render_missions_page
+from ui.pages.settings import render_settings
 
 st.set_page_config(page_title="MowbotFleet", layout="wide")
 
@@ -30,7 +30,9 @@ if page != "Settings" and not is_connected():
         client_id="MowbotFleet"
     ))
 
-if page == "Dashboard":
-    render_dashboard()
-elif page == "Settings":
-    render_settings()
+    if page == "Dashboard":
+        render_dashboard()
+    elif page == "Missions":
+        render_missions_page()
+    elif page == "Settings":
+        render_settings()

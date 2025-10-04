@@ -4,9 +4,9 @@ import streamlit as st
 import time
 from datetime import datetime
 from mqtt_client import fleet_state, is_connected, get_debug_info
-from .map import render_map
-from .agv_details import render_agv_details
-from .controls import render_quick_controls
+from ..components.map import render_map
+from ..components.agv_details import render_agv_details
+from ..components.controls import render_quick_controls
 
 
 @st.fragment(run_every="1s")
