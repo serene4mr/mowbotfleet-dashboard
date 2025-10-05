@@ -140,20 +140,23 @@ def render_mission_dispatch():
     # Show format help
     with st.expander("📖 Node Format Help"):
         st.markdown("""
-        **Format:** `nodeId,x,y,theta` (one per line)
-        
-        **Example:**
-        ```
-        warehouse_pickup,10.5,20.3,0.0
-        delivery_zone_A,15.2,25.1,1.57
-        charging_station,5.0,5.0,3.14
-        ```
+        **How to Add Nodes:**
+        1. Fill in the form fields below for each waypoint
+        2. Click "➕ Add Node" to add it to the mission
+        3. Use "📍 Use AGV Pos" to fill coordinates with selected AGV's current position
+        4. Repeat until all waypoints are added
         
         **Parameters:**
-        - `nodeId`: Unique identifier for the waypoint
-        - `x`: X coordinate in meters
-        - `y`: Y coordinate in meters  
-        - `theta`: Orientation in radians (0 = North, π/2 = East)
+        - **Node ID**: Unique identifier for the waypoint (e.g., "warehouse_pickup")
+        - **X (Longitude)**: Longitude in degrees (-180 to 180)
+        - **Y (Latitude)**: Latitude in degrees (-90 to 90)  
+        - **Heading (rad)**: Orientation in radians (0 = North, π/2 = East) - NED coordinate system
+        
+        **Example Values:**
+        - Node ID: `warehouse_pickup`
+        - X: `127.0567` (Seoul longitude)
+        - Y: `37.5075` (Seoul latitude)
+        - Heading: `0.0` (pointing North)
         """)
     
     # Load max nodes from config
@@ -409,8 +412,8 @@ def render_mission_dispatch():
         # Default view coordinates (you can change these to your preferred location)
         default_lat, default_lon = 37.5075, 127.0567  # Seoul coordinates as example
         
-        # Note: If your coordinates are in meters (local coordinate system), 
-        # you may need to adjust the scale or convert them to geographic coordinates
+        # Note: Coordinates are in geographic format (longitude/latitude in degrees)
+        # X = Longitude, Y = Latitude, both in degrees
         
         if st.session_state.mission_nodes_list:
             # Prepare data for pydeck
@@ -439,16 +442,16 @@ def render_mission_dispatch():
                     arrow_length = 0.00005  # 50% shorter arrow length
                     arrow_width = 0.0002   # Arrow width
                     
-                    # Main arrow line (shaft)
-                    end_x = x_coord + arrow_length * np.cos(node['theta'])
-                    end_y = y_coord + arrow_length * np.sin(node['theta'])
+                    # Main arrow line (shaft) - NED coordinate system (0 = North)
+                    end_x = x_coord + arrow_length * np.sin(node['theta'])  # NED: sin for East
+                    end_y = y_coord + arrow_length * np.cos(node['theta'])  # NED: cos for North
                     
                     # Arrow head points (two lines forming V-shape)
                     head_length = arrow_length * 0.4
-                    left_x = end_x - head_length * np.cos(node['theta'] - np.pi/6)
-                    left_y = end_y - head_length * np.sin(node['theta'] - np.pi/6)
-                    right_x = end_x - head_length * np.cos(node['theta'] + np.pi/6)
-                    right_y = end_y - head_length * np.sin(node['theta'] + np.pi/6)
+                    left_x = end_x - head_length * np.sin(node['theta'] - np.pi/6)  # NED: sin for East
+                    left_y = end_y - head_length * np.cos(node['theta'] - np.pi/6)  # NED: cos for North
+                    right_x = end_x - head_length * np.sin(node['theta'] + np.pi/6)  # NED: sin for East
+                    right_y = end_y - head_length * np.cos(node['theta'] + np.pi/6)  # NED: cos for North
                     
                     # Add main arrow shaft
                     arrow_data.append({
