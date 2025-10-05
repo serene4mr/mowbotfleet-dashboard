@@ -35,6 +35,12 @@ ui:
 general:
   manufacturer: "MowbotAI"       # Fleet client manufacturer identifier
   serial_number: "MowbotFleetClient" # Fleet client serial number
+  
+  # Map Configuration
+  map:
+    style: "default"             # Map style: "default" or "mapbox_satellite"
+    mapbox_api_key: ""           # Mapbox API key (required for satellite imagery)
+    default_zoom: 15             # Default zoom level for all maps (1-20)
 
 # Dashboard UI Configuration  
 dashboard:

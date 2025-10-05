@@ -5,6 +5,7 @@ import pydeck as pdk
 from mqtt_client import fleet_state
 import urllib.parse
 from config import load_config
+from utils.map_utils import get_map_style_for_pydeck, get_mapbox_api_keys, get_default_zoom
 
 def create_arrow_icon(color, is_selected=False):
     """Create an SVG arrow icon with the specified color and selection state"""
@@ -158,7 +159,7 @@ def render_map():
         view_state = pdk.ViewState(
             longitude=map_center.get("lon", 127.0567),
             latitude=map_center.get("lat", 37.5075),
-            zoom=ui_config.get("map_default_zoom", 12),
+            zoom=get_default_zoom(),
             pitch=0
         )
 
@@ -167,7 +168,8 @@ def render_map():
         layers=[layer],
         initial_view_state=view_state,
         tooltip={"text": "AGV: {serial}\nBattery: {battery}%\nMode: {mode}\nHeading: {heading}°"},
-        map_style="light"  # Use built-in light style
+        map_style=get_map_style_for_pydeck(),
+        api_keys=get_mapbox_api_keys()
     )
 
     # Display map

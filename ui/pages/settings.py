@@ -33,8 +33,84 @@ def render_settings():
         }
         save_config(general_config)
         
+        # Check what was changed to show appropriate message
+        mqtt_related_changed = (
+            manufacturer != cfg["general"]["manufacturer"] or 
+            serial_number != cfg["general"]["serial_number"]
+        )
+        
         st.success("General settings saved.")
-        st.info("⚠️ Changes will take effect after MQTT reconnection.")
+        
+        if mqtt_related_changed:
+            st.info("⚠️ Manufacturer/Serial Number changes will take effect after MQTT reconnection.")
+
+    st.markdown("---")
+    
+    # Map Configuration
+    st.subheader("Map Configuration")
+    st.caption("Configure map display settings for all maps in the application")
+    
+    map_style = st.selectbox(
+        "Map Style",
+        options=["default", "mapbox_satellite"],
+        index=0 if cfg["general"].get("map", {}).get("style", "default") == "default" else 1,
+        help="Choose between default map or Mapbox satellite imagery",
+        key="map_style_select"
+    )
+    
+    default_zoom = st.slider(
+        "Default Zoom Level",
+        min_value=1,
+        max_value=20,
+        value=cfg["general"].get("map", {}).get("default_zoom", 15),
+        help="Default zoom level for all maps (1=world view, 20=building level)",
+        key="default_zoom_slider"
+    )
+    
+    # Add zoom level reference
+    st.caption("📏 **Zoom Reference:** 1=World • 5=Country • 10=City • 15=Street • 20=Building (Max)")
+    
+    # Show Mapbox API key field only if satellite is selected
+    mapbox_api_key = ""
+    if map_style == "mapbox_satellite":
+        mapbox_api_key = st.text_input(
+            "Mapbox API Key", 
+            value=cfg["general"].get("map", {}).get("mapbox_api_key", ""),
+            type="password",
+            help="Required: Enter your Mapbox API key to use satellite imagery",
+            key="mapbox_api_key"
+        )
+        
+        if not mapbox_api_key:
+            st.warning("⚠️ Mapbox API key is required for satellite imagery")
+    else:
+        # Use existing API key if available, but don't require it
+        mapbox_api_key = cfg["general"].get("map", {}).get("mapbox_api_key", "")
+    
+    if st.button("🗺️ Save Map Settings"):
+        # Validate Mapbox configuration
+        if map_style == "mapbox_satellite" and not mapbox_api_key:
+            st.error("❌ Mapbox API key is required for satellite imagery")
+            return
+        
+        # Update map configuration
+        new_cfg = cfg.copy()
+        if "map" not in new_cfg["general"]:
+            new_cfg["general"]["map"] = {}
+        new_cfg["general"]["map"]["style"] = map_style
+        new_cfg["general"]["map"]["mapbox_api_key"] = mapbox_api_key
+        new_cfg["general"]["map"]["default_zoom"] = default_zoom
+        
+        # Save only the map settings
+        map_config = {
+            "general": {
+                "map": new_cfg["general"]["map"]
+            }
+        }
+        save_config(map_config)
+        
+        st.success("Map settings saved.")
+        st.info("🗺️ Maps will use the new configuration immediately.")
 
     st.markdown("---")
     

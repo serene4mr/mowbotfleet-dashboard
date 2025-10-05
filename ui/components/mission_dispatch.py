@@ -7,6 +7,7 @@ from utils.mission_utils import (
     parse_nodes_input, validate_nodes, format_nodes_preview, generate_order_id,
     create_vda5050_order, create_mission_summary, validate_order_id, send_mission_order
 )
+from utils.map_utils import get_map_style_for_pydeck, get_mapbox_api_keys, get_default_zoom
 from config import load_config
 
 @st.fragment(run_every="1s")
@@ -432,8 +433,8 @@ def render_mission_dispatch():
                         'color': [255, 0, 0]  # All waypoints red
                     })
                 
-                # Add heading arrow (if heading is not zero and coordinates are valid)
-                if node['theta'] != 0 and -180 <= x_coord <= 180 and -90 <= y_coord <= 90:
+                # Add heading arrow (if coordinates are valid)
+                if -180 <= x_coord <= 180 and -90 <= y_coord <= 90:
                     # Create arrow using line segments
                     arrow_length = 0.00005  # 50% shorter arrow length
                     arrow_width = 0.0002   # Arrow width
@@ -528,7 +529,7 @@ def render_mission_dispatch():
             view_state = pdk.ViewState(
                 latitude=center_lat,
                 longitude=center_lon,
-                zoom=18,
+                zoom=get_default_zoom(),
                 pitch=0
             )
             
@@ -539,12 +540,13 @@ def render_mission_dispatch():
             
             # Create and display map
             r = pdk.Deck(
-                map_style=pdk.map_styles.CARTO_LIGHT,
+                map_style=get_map_style_for_pydeck(),
                 initial_view_state=view_state,
                 layers=layers,
                 tooltip={
                     'text': 'Node: {node_id}\nX: {lon}\nY: {lat}\nHeading: {heading}'
-                }
+                },
+                api_keys=get_mapbox_api_keys()
             )
             
             st.pydeck_chart(r, height=400)
@@ -557,15 +559,16 @@ def render_mission_dispatch():
             view_state = pdk.ViewState(
                 latitude=default_lat,
                 longitude=default_lon,
-                zoom=10,
+                zoom=get_default_zoom(),
                 pitch=0
             )
             
             # Create empty map
             r = pdk.Deck(
-                map_style=pdk.map_styles.CARTO_LIGHT,
+                map_style=get_map_style_for_pydeck(),
                 initial_view_state=view_state,
                 layers=[],
+                api_keys=get_mapbox_api_keys(),
                 tooltip={
                     'html': 'No waypoints added yet. Use the form on the left to add waypoints.',
                     'style': {
