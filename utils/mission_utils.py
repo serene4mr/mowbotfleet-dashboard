@@ -121,6 +121,7 @@ def validate_nodes(nodes: List[Dict[str, Any]]) -> List[str]:
         return errors
     
     # Check minimum distance between consecutive nodes
+    warnings = []
     for i in range(len(nodes) - 1):
         current = nodes[i]
         next_node = nodes[i + 1]
@@ -131,10 +132,10 @@ def validate_nodes(nodes: List[Dict[str, Any]]) -> List[str]:
         distance = (dx**2 + dy**2)**0.5
         
         # Warn if nodes are too close (adjust threshold as needed)
-        if distance < 0.1:  # 10cm minimum
-            errors.append(f"Nodes '{current['nodeId']}' and '{next_node['nodeId']}' are very close ({distance:.2f}m)")
+        if distance < 0.0:  # Disabled - no minimum distance check
+            warnings.append(f"Nodes '{current['nodeId']}' and '{next_node['nodeId']}' are very close ({distance:.2f}m)")
     
-    return errors
+    return errors, warnings
 
 
 def format_nodes_preview(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

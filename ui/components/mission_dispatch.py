@@ -162,49 +162,71 @@ def render_mission_dispatch():
     if 'mission_nodes_list' not in st.session_state:
         st.session_state.mission_nodes_list = []
     
+    # Initialize form counter for dynamic key rotation
+    if 'form_counter' not in st.session_state:
+        st.session_state.form_counter = 0
+    if 'agv_position_used' not in st.session_state:
+        st.session_state.agv_position_used = False
+    
     # Two-column layout: Form on left, Map on right
     col_left, col_right = st.columns([1, 1])
     
     with col_left:
         st.markdown("**📍 Add New Node**")
         
-        with st.form("add_node_form", clear_on_submit=True):
+        with st.form("add_node_form"):
+            # Generate unique keys based on form counter
+            counter = st.session_state.form_counter
+            node_id_key = f"new_node_id_{counter}"
+            x_key = f"new_node_x_{counter}"
+            y_key = f"new_node_y_{counter}"
+            theta_key = f"new_node_theta_{counter}"
+            
             col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
             
             with col1:
                 node_id = st.text_input(
                     "Node ID:",
                     placeholder="e.g., warehouse_pickup",
-                    key="new_node_id"
+                    key=node_id_key
                 )
             
             with col2:
+                # Use AGV position if available, otherwise default to 0.0
+                x_value = st.session_state.get('agv_x', 0.0) if st.session_state.agv_position_used else 0.0
+                
                 x_coord = st.number_input(
                     "X (Longitude):",
-                    value=0.0,
+                    value=x_value,
                     step=0.001,
                     format="%.6f",
-                    key="new_node_x",
+                    key=x_key,
                     help="Longitude in degrees (-180 to 180)"
                 )
             
             with col3:
+                # Use AGV position if available, otherwise default to 0.0
+                y_value = st.session_state.get('agv_y', 0.0) if st.session_state.agv_position_used else 0.0
+                
                 y_coord = st.number_input(
                     "Y (Latitude):",
-                    value=0.0,
+                    value=y_value,
                     step=0.001,
                     format="%.6f",
-                    key="new_node_y",
+                    key=y_key,
                     help="Latitude in degrees (-90 to 90)"
                 )
             
             with col4:
+                # Use AGV position if available, otherwise default to 0.0
+                theta_value = st.session_state.get('agv_theta', 0.0) if st.session_state.agv_position_used else 0.0
+                
                 theta = st.number_input(
                     "Heading (rad):",
-                    value=0.0,
+                    value=theta_value,
                     step=0.001,
                     format="%.6f",
-                    key="new_node_theta"
+                    key=theta_key
                 )
             
             col1, col2 = st.columns([1, 4])
@@ -212,6 +234,7 @@ def render_mission_dispatch():
                 add_node = st.form_submit_button("➕ Add Node", use_container_width=True)
             
             with col2:
+                # Check if add_node was clicked
                 if add_node:
                     if node_id.strip():
                         # Validate the new node
@@ -234,10 +257,35 @@ def render_mission_dispatch():
                                 else:
                                     st.session_state.mission_nodes_list.append(new_node)
                                     st.success(f"✅ Added node '{node_id.strip()}'")
+                                    # Reset AGV position flag after successful node addition
+                                    st.session_state.agv_position_used = False
                         except ValueError as e:
                             st.error(f"❌ Invalid coordinate values: {str(e)}")
                     else:
                         st.error("❌ Node ID is required")
+        
+        # Button to get current AGV position (outside form to avoid session state conflicts)
+        # Debug: Show what's available
+        if not target_agv_serial:
+            st.info("ℹ️ Select a target AGV to use the 'Use AGV Pos' button")
+        elif target_agv_serial not in fleet_state:
+            st.warning(f"⚠️ Selected AGV '{target_agv_serial}' is not connected")
+        else:
+            agv = fleet_state[target_agv_serial]
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                if st.button("📍 Use AGV Pos", help="Fill coordinates with selected AGV's current position", use_container_width=True, key="use_agv_pos_btn"):
+                    # Increment form counter for new widget keys
+                    st.session_state.form_counter += 1
+                    # Store AGV position for the new form
+                    st.session_state.agv_x = agv.position[0]  # longitude
+                    st.session_state.agv_y = agv.position[1]  # latitude
+                    st.session_state.agv_theta = agv.theta    # heading
+                    st.session_state.agv_position_used = True
+                    st.success(f"✅ Filled coordinates with AGV {target_agv_serial} position: ({agv.position[0]:.6f}, {agv.position[1]:.6f}, {agv.theta:.6f})")
+                    st.rerun()
+            with col2:
+                st.write("")  # Empty space for alignment
         
         # Display current nodes table
         if st.session_state.mission_nodes_list:
@@ -296,13 +344,27 @@ def render_mission_dispatch():
             
             # Mission validation
             try:
-                validation_errors = validate_nodes(st.session_state.mission_nodes_list)
+                validation_result = validate_nodes(st.session_state.mission_nodes_list)
+                
+                # Handle both errors and warnings
+                if isinstance(validation_result, tuple):
+                    validation_errors, validation_warnings = validation_result
+                else:
+                    # Backward compatibility for old function signature
+                    validation_errors = validation_result
+                    validation_warnings = []
                 
                 if validation_errors:
                     st.error("❌ Mission Validation Errors:")
                     for error in validation_errors:
                         st.error(f"• {error}")
-                else:
+                
+                if validation_warnings:
+                    st.warning("⚠️ Mission Validation Warnings:")
+                    for warning in validation_warnings:
+                        st.warning(f"• {warning}")
+                
+                if not validation_errors:
                     st.success(f"✅ Valid mission with {len(st.session_state.mission_nodes_list)} waypoints")
                     
                     # Show VDA5050 Order preview if we have a valid target AGV
@@ -372,19 +434,47 @@ def render_mission_dispatch():
                 
                 # Add heading arrow (if heading is not zero and coordinates are valid)
                 if node['theta'] != 0 and -180 <= x_coord <= 180 and -90 <= y_coord <= 90:
-                    arrow_length = 0.001  # Adjust for map scale
-                    end_x = x_coord + arrow_length * np.cos(node['theta'])  # End longitude
-                    end_y = y_coord + arrow_length * np.sin(node['theta'])  # End latitude
+                    # Create arrow using line segments
+                    arrow_length = 0.0001  # Extra short arrow length
+                    arrow_width = 0.0002   # Arrow width
                     
-                    # Only add arrow if both start and end coordinates are valid
-                    if -180 <= end_x <= 180 and -90 <= end_y <= 90:
-                        arrow_data.append({
-                            'start_lon': x_coord,  # Start longitude (X)
-                            'start_lat': y_coord,  # Start latitude (Y)
-                            'end_lon': end_x,      # End longitude
-                            'end_lat': end_y,      # End latitude
-                            'color': [255, 165, 0]  # Orange
-                        })
+                    # Main arrow line (shaft)
+                    end_x = x_coord + arrow_length * np.cos(node['theta'])
+                    end_y = y_coord + arrow_length * np.sin(node['theta'])
+                    
+                    # Arrow head points (two lines forming V-shape)
+                    head_length = arrow_length * 0.4
+                    left_x = end_x - head_length * np.cos(node['theta'] - np.pi/6)
+                    left_y = end_y - head_length * np.sin(node['theta'] - np.pi/6)
+                    right_x = end_x - head_length * np.cos(node['theta'] + np.pi/6)
+                    right_y = end_y - head_length * np.sin(node['theta'] + np.pi/6)
+                    
+                    # Add main arrow shaft
+                    arrow_data.append({
+                        'start_lon': x_coord,
+                        'start_lat': y_coord,
+                        'end_lon': end_x,
+                        'end_lat': end_y,
+                        'color': [255, 165, 0]  # Orange
+                    })
+                    
+                    # Add left arrow head line
+                    arrow_data.append({
+                        'start_lon': end_x,
+                        'start_lat': end_y,
+                        'end_lon': left_x,
+                        'end_lat': left_y,
+                        'color': [255, 165, 0]  # Orange
+                    })
+                    
+                    # Add right arrow head line
+                    arrow_data.append({
+                        'start_lon': end_x,
+                        'start_lat': end_y,
+                        'end_lon': right_x,
+                        'end_lat': right_y,
+                        'color': [255, 165, 0]  # Orange
+                    })
             
             # Create waypoints layer
             waypoints_layer = pdk.Layer(
@@ -400,14 +490,14 @@ def render_mission_dispatch():
                 auto_highlight=True
             )
             
-            # Create arrows layer
+            # Create arrows layer using LineLayer for arrow shape
             arrows_layer = pdk.Layer(
                 'LineLayer',
                 data=arrow_data,
                 get_source_position='[start_lon, start_lat]',
                 get_target_position='[end_lon, end_lat]',
                 get_color='color',
-                get_width=5,
+                get_width=3,
                 pickable=False
             )
             
@@ -536,11 +626,25 @@ def render_mission_dispatch():
             try:
                 # Get nodes from session state
                 nodes = st.session_state.mission_nodes_list
-                validation_errors = validate_nodes(nodes)
+                validation_result = validate_nodes(nodes)
+                
+                # Handle both errors and warnings
+                if isinstance(validation_result, tuple):
+                    validation_errors, validation_warnings = validation_result
+                else:
+                    # Backward compatibility for old function signature
+                    validation_errors = validation_result
+                    validation_warnings = []
                 
                 if validation_errors:
                     st.error("Cannot send mission with validation errors")
                     return
+                
+                # Show warnings but allow sending
+                if validation_warnings:
+                    st.warning("⚠️ Mission has validation warnings:")
+                    for warning in validation_warnings:
+                        st.warning(f"• {warning}")
                 
                 # Validate order ID
                 if not validate_order_id(order_id):
