@@ -98,7 +98,7 @@ def render_mission_dispatch():
     
     # Handle form clearing flag
     if st.session_state.get('mission_form_clear', False):
-        st.session_state.mission_nodes_input = ""
+        st.session_state.mission_nodes_list = []
         st.session_state.mission_order_id = generate_order_id()
         st.session_state.mission_form_clear = False
         st.rerun()
@@ -158,35 +158,132 @@ def render_mission_dispatch():
     # Load max nodes from config
     max_nodes = mission_config.get("max_nodes_per_mission", 100)
     
-    nodes_text = st.text_area(
-        f"Enter nodes (max {max_nodes}):",
-        placeholder="warehouse_pickup,10.5,20.3,0.0\ndelivery_zone_A,15.2,25.1,1.57\ncharging_station,5.0,5.0,3.14",
-        height=120,
-        key="mission_nodes_input",
-        help=f"Enter up to {max_nodes} waypoints for this mission"
-    )
+    # Initialize nodes list in session state if not exists
+    if 'mission_nodes_list' not in st.session_state:
+        st.session_state.mission_nodes_list = []
     
-    # Real-time validation and preview
-    if nodes_text.strip():
+    # Node input form
+    st.markdown("**📍 Add New Node**")
+    
+    with st.form("add_node_form", clear_on_submit=True):
+        col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+        
+        with col1:
+            node_id = st.text_input(
+                "Node ID:",
+                placeholder="e.g., warehouse_pickup",
+                key="new_node_id"
+            )
+        
+        with col2:
+            x_coord = st.number_input(
+                "X Coordinate:",
+                value=0.0,
+                step=0.001,
+                format="%.6f",
+                key="new_node_x"
+            )
+        
+        with col3:
+            y_coord = st.number_input(
+                "Y Coordinate:",
+                value=0.0,
+                step=0.001,
+                format="%.6f",
+                key="new_node_y"
+            )
+        
+        with col4:
+            theta = st.number_input(
+                "Heading (rad):",
+                value=0.0,
+                step=0.001,
+                format="%.6f",
+                key="new_node_theta"
+            )
+        
+        col1, col2 = st.columns([1, 4])
+        with col1:
+            add_node = st.form_submit_button("➕ Add Node", use_container_width=True)
+        
+        with col2:
+            if add_node:
+                if node_id.strip():
+                    # Validate the new node
+                    try:
+                        new_node = {
+                            'nodeId': node_id.strip(),
+                            'x': float(x_coord),
+                            'y': float(y_coord),
+                            'theta': float(theta)
+                        }
+                        
+                        # Check if we're under the limit
+                        if len(st.session_state.mission_nodes_list) >= max_nodes:
+                            st.error(f"❌ Maximum {max_nodes} nodes allowed per mission")
+                        else:
+                            # Check for duplicate node ID
+                            existing_ids = [node['nodeId'] for node in st.session_state.mission_nodes_list]
+                            if node_id.strip() in existing_ids:
+                                st.error(f"❌ Node ID '{node_id.strip()}' already exists")
+                            else:
+                                st.session_state.mission_nodes_list.append(new_node)
+                                st.success(f"✅ Added node '{node_id.strip()}'")
+                    except ValueError as e:
+                        st.error(f"❌ Invalid coordinate values: {str(e)}")
+                else:
+                    st.error("❌ Node ID is required")
+    
+    # Display current nodes table
+    if st.session_state.mission_nodes_list:
+        st.markdown(f"**📋 Current Mission Nodes ({len(st.session_state.mission_nodes_list)}/{max_nodes})**")
+        
+        # Create table data
+        table_data = []
+        for i, node in enumerate(st.session_state.mission_nodes_list):
+            table_data.append({
+                "Order": i + 1,
+                "Node ID": node['nodeId'],
+                "X": f"{node['x']:.6f}",
+                "Y": f"{node['y']:.6f}",
+                "Heading": f"{node['theta']:.6f}",
+                "Actions": f"Delete"
+            })
+        
+        # Display table with delete buttons
+        for i, row in enumerate(table_data):
+            col1, col2, col3, col4, col5, col6 = st.columns([1, 2, 1, 1, 1, 1])
+            
+            with col1:
+                st.write(f"**{row['Order']}**")
+            with col2:
+                st.write(f"**{row['Node ID']}**")
+            with col3:
+                st.write(row['X'])
+            with col4:
+                st.write(row['Y'])
+            with col5:
+                st.write(row['Heading'])
+            with col6:
+                if st.button("🗑️", key=f"delete_node_{i}", help="Delete this node"):
+                    st.session_state.mission_nodes_list.pop(i)
+                    st.rerun()
+        
+        # Clear all nodes button
+        if st.button("🗑️ Clear All Nodes", type="secondary"):
+            st.session_state.mission_nodes_list = []
+            st.rerun()
+        
+        # Mission validation
         try:
-            nodes = parse_nodes_input(nodes_text)
-            validation_errors = validate_nodes(nodes)
+            validation_errors = validate_nodes(st.session_state.mission_nodes_list)
             
             if validation_errors:
-                st.error("❌ Validation Errors:")
+                st.error("❌ Mission Validation Errors:")
                 for error in validation_errors:
                     st.error(f"• {error}")
             else:
-                st.success(f"✅ Valid mission with {len(nodes)} waypoints")
-                
-                # Show mission preview
-                with st.expander("👁️ Mission Preview"):
-                    preview_data = format_nodes_preview(nodes)
-                    st.dataframe(
-                        preview_data,
-                        width='stretch',
-                        hide_index=True
-                    )
+                st.success(f"✅ Valid mission with {len(st.session_state.mission_nodes_list)} waypoints")
                 
                 # Show VDA5050 Order preview if we have a valid target AGV
                 if target_agv_serial and order_id.strip():
@@ -204,7 +301,7 @@ def render_mission_dispatch():
                                 order_id=order_id,
                                 target_manufacturer=manufacturer,
                                 target_serial=target_agv_serial,
-                                nodes=nodes
+                                nodes=st.session_state.mission_nodes_list
                             )
                             
                             # Show VDA5050 Order summary
@@ -232,7 +329,9 @@ def render_mission_dispatch():
                         st.warning(f"⚠️ Cannot create VDA5050 Order preview: {str(e)}")
                         
         except Exception as e:
-            st.error(f"❌ Parsing Error: {str(e)}")
+            st.error(f"❌ Error validating mission: {str(e)}")
+    else:
+        st.info("💡 Add nodes above to create a mission")
     
     st.markdown("---")
     
@@ -241,15 +340,15 @@ def render_mission_dispatch():
     
     with col1:
         send_enabled = (
-            nodes_text.strip() and 
+            len(st.session_state.get('mission_nodes_list', [])) > 0 and 
             target_agv_serial and 
             order_id.strip()
         )
         
         if st.button("🚀 Send Mission", type="primary", disabled=not send_enabled):
             try:
-                # Parse and validate nodes
-                nodes = parse_nodes_input(nodes_text)
+                # Get nodes from session state
+                nodes = st.session_state.mission_nodes_list
                 validation_errors = validate_nodes(nodes)
                 
                 if validation_errors:
