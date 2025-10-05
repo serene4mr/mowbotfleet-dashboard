@@ -410,7 +410,10 @@ def render_mission_dispatch():
                 data=waypoint_data,
                 get_position='[lon, lat]',
                 get_color='color',
-                get_radius=100,
+                get_radius=1,   # Base radius (minimal base size)
+                size_scale=0.1, # Scale down to 10% of original size
+                size_min_pixels=1,   # Keep small when zoomed in
+                size_max_pixels=30,  # Bigger when zoomed out for better visibility
                 pickable=True,
                 auto_highlight=True
             )
@@ -453,7 +456,7 @@ def render_mission_dispatch():
             view_state = pdk.ViewState(
                 latitude=center_lat,
                 longitude=center_lon,
-                zoom=15,
+                zoom=18,
                 pitch=0
             )
             
