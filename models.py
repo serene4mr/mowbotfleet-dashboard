@@ -17,7 +17,7 @@ class AGVInfo:
     connection: str
     battery: float
     operating_mode: str
-    position: Tuple[float, float]
+    position: Tuple[float, float]  # (x, y) = (longitude, latitude)
     theta: float
     last_update: datetime
     connect_timestamp: float = field(default_factory=time.time)

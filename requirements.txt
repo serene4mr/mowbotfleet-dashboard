@@ -14,6 +14,7 @@ bcrypt>=4.0.1
 # Data handling and visualization
 pandas>=2.0.3
 pydeck>=0.8.1
+numpy>=1.24.0
 
 # Development and testing
 pytest>=7.4.0

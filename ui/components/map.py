@@ -71,7 +71,7 @@ def render_map():
     # Only process AGVs if they exist
     if fleet_state:
         for agv in fleet_state.values():
-            lat, lon = agv.position
+            lon, lat = agv.position  # position is now (longitude, latitude)
             is_selected = (agv.serial == selected_serial)
             
             # Color based on battery level
@@ -137,7 +137,7 @@ def render_map():
     if selected_serial and selected_serial in fleet_state:
         # Center on selected AGV
         agv = fleet_state[selected_serial]
-        lat, lon = agv.position
+        lon, lat = agv.position  # position is now (longitude, latitude)
         view_state = pdk.ViewState(
             longitude=lon,
             latitude=lat,

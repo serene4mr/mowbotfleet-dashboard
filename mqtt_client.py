@@ -37,7 +37,7 @@ def _update_agv(serial: str, state: State):
     
     # Handle position data (may be None in some state messages)
     if state.agvPosition:
-        info.position = (state.agvPosition.y, state.agvPosition.x)
+        info.position = (state.agvPosition.x, state.agvPosition.y)  # (x, y) = (longitude, latitude)
         info.theta = state.agvPosition.theta or 0.0
     else:
         # Keep existing position if no new position data
