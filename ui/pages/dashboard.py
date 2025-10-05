@@ -25,7 +25,7 @@ def render_fleet_table():
         # Show table header (compact)
         col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
         with col1:
-            st.markdown("**Serial**")
+            st.markdown("**Serial (Manufacturer)**")
         with col2:
             st.markdown("**Battery**")
         with col3:
@@ -53,9 +53,13 @@ def render_fleet_table():
             col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
             
             with col1:
-                # Radio button with AGV serial as the option (no separate serial column)
+                # Get AGV manufacturer from factsheet or default
+                manufacturer = getattr(agv, 'manufacturer', 'Unknown')
+                agv_display_name = f"{agv.serial} ({manufacturer})"
+                
+                # Radio button with AGV serial and manufacturer as the option
                 is_selected = st.radio(
-                    f"Select {agv.serial}",
+                    f"Select {agv_display_name}",
                     options=[agv.serial],
                     index=0 if agv.serial == current_selection else None,
                     key=f"agv_radio_{agv.serial}",
@@ -117,10 +121,6 @@ def render_header():
     
     # Auto-updating status section (fragment)
     render_header_status()
-    
-    # Manual refresh button
-    if st.button("🔄 Refresh Dashboard"):
-        st.rerun()
 
 @st.fragment(run_every="1s")
 def render_header_status():
@@ -162,9 +162,6 @@ def render_row2():
     with col2:
         render_quick_controls()
 
-def render_row3():
-    st.subheader("Mission Dispatch")
-    st.write("Mission Dispatch Form (placeholder)")
 
 def render_debug():
     """Debug section to show MQTT connection and message details"""

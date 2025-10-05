@@ -9,6 +9,89 @@ from utils.mission_utils import (
 )
 from config import load_config
 
+@st.fragment(run_every="1s")
+def get_current_agv_options():
+    """Get current AGV options that auto-update with fleet changes"""
+    if not fleet_state:
+        return [], []
+    
+    # Create AGV options with simplified display (name only)
+    agv_options = []
+    agv_display_names = []
+    
+    for serial, agv in fleet_state.items():
+        # Get AGV manufacturer from factsheet or default
+        manufacturer = getattr(agv, 'manufacturer', 'Unknown')
+        
+        # Simple display name with just AGV name and manufacturer
+        display_name = f"{serial} ({manufacturer})"
+        agv_options.append(serial)
+        agv_display_names.append(display_name)
+    
+    return agv_options, agv_display_names
+
+def render_agv_selection_with_dropdown():
+    """Render AGV selection dropdown with immediate selection response"""
+    # Get current AGV options (auto-updates every 1s)
+    agv_options, agv_display_names = get_current_agv_options()
+    
+    if not agv_display_names:
+        st.warning("⚠️ No AGVs available for mission dispatch.")
+        st.info("Connect AGVs to the fleet to enable mission dispatch.")
+        return None
+    
+    # Initialize session state if not exists
+    if 'mission_selected_agv_serial' not in st.session_state:
+        dashboard_selected = st.session_state.get('selected_agv')
+        if dashboard_selected and dashboard_selected in agv_options:
+            st.session_state.mission_selected_agv_serial = dashboard_selected
+        else:
+            st.session_state.mission_selected_agv_serial = agv_options[0] if agv_options else None
+    
+    # Check if currently selected AGV is still available
+    current_selection = st.session_state.mission_selected_agv_serial
+    if current_selection and current_selection not in agv_options:
+        # Selected AGV is no longer available, pick first available
+        st.session_state.mission_selected_agv_serial = agv_options[0] if agv_options else None
+        current_selection = st.session_state.mission_selected_agv_serial
+    
+    # Find index of currently selected AGV
+    selected_index = 0
+    if current_selection and current_selection in agv_options:
+        selected_index = agv_options.index(current_selection)
+    
+    # Dropdown outside fragment for immediate response
+    target_agv = st.selectbox(
+        "Select Target AGV:",
+        options=agv_display_names,
+        index=selected_index,
+        key="mission_target_agv_display",
+        help="Select the AGV that will execute this mission"
+    )
+    
+    # Update session state with new selection immediately
+    target_agv_serial = agv_options[agv_display_names.index(target_agv)]
+    st.session_state.mission_selected_agv_serial = target_agv_serial
+    
+    return target_agv_serial
+
+@st.fragment(run_every="1s")
+def render_agv_info(target_agv_serial):
+    """Render real-time AGV information metrics"""
+    if target_agv_serial and target_agv_serial in fleet_state:
+        agv = fleet_state[target_agv_serial]
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Battery", f"{agv.battery:.1f}%")
+        with col2:
+            st.metric("Mode", agv.operating_mode)
+        with col3:
+            st.metric("Position", f"({agv.position[0]:.6f}, {agv.position[1]:.6f})")
+        with col4:
+            error_count = len(getattr(agv, 'errors', []))
+            st.metric("Errors", error_count)
+
 def render_mission_dispatch():
     """Render mission dispatch form with enhanced validation and AGV selection"""
     st.markdown("#### 📝 Dispatch New Mission")
@@ -24,59 +107,15 @@ def render_mission_dispatch():
     config = load_config()
     mission_config = config.get("mission", {})
     
-    if not fleet_state:
-        st.warning("⚠️ No AGVs available for mission dispatch.")
-        st.info("Connect AGVs to the fleet to enable mission dispatch.")
+    # Target AGV selection with enhanced display (auto-refresh every 1s)
+    st.markdown("**🎯 Target AGV Selection**")
+    target_agv_serial = render_agv_selection_with_dropdown()
+    
+    if not target_agv_serial:
         return
     
-    # Target AGV selection with enhanced display
-    st.markdown("**🎯 Target AGV Selection**")
-    
-    # Create AGV options with enhanced information
-    agv_options = []
-    agv_display_names = []
-    
-    for serial, agv in fleet_state.items():
-        # Get AGV manufacturer from factsheet or default
-        manufacturer = getattr(agv, 'manufacturer', 'Unknown')
-        battery_status = "🔋" if agv.battery > 20 else "⚠️"
-        mode_status = "🟢" if agv.operating_mode == "AUTOMATIC" else "🟡"
-        
-        display_name = f"{serial} ({manufacturer}) - {battery_status}{agv.battery:.0f}% {mode_status}"
-        agv_options.append(serial)
-        agv_display_names.append(display_name)
-    
-    # Default to dashboard selected AGV if available
-    default_idx = 0
-    dashboard_selected = st.session_state.get('selected_agv')
-    if dashboard_selected and dashboard_selected in agv_options:
-        default_idx = agv_options.index(dashboard_selected)
-    
-    target_agv = st.selectbox(
-        "Select Target AGV:",
-        options=agv_display_names,
-        index=default_idx,
-        key="mission_target_agv_display",
-        help="Select the AGV that will execute this mission"
-    )
-    
-    # Get actual AGV serial from display name
-    target_agv_serial = agv_options[agv_display_names.index(target_agv)]
-    
-    # Display selected AGV details
-    if target_agv_serial in fleet_state:
-        agv = fleet_state[target_agv_serial]
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.metric("Battery", f"{agv.battery:.1f}%")
-        with col2:
-            st.metric("Mode", agv.operating_mode)
-        with col3:
-            st.metric("Position", f"({agv.position[0]:.1f}, {agv.position[1]:.1f})")
-        with col4:
-            error_count = len(getattr(agv, 'errors', []))
-            st.metric("Errors", error_count)
+    # Display selected AGV details (auto-refresh every 1s)
+    render_agv_info(target_agv_serial)
     
     st.markdown("---")
     
