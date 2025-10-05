@@ -324,26 +324,8 @@ def render_mission_dispatch():
                                     nodes=st.session_state.mission_nodes_list
                                 )
                                 
-                                # Show VDA5050 Order summary
-                                summary = create_mission_summary(vda5050_order)
-                                
-                                st.markdown("**📋 VDA5050 Order Summary:**")
-                                col1, col2, col3 = st.columns(3)
-                                with col1:
-                                    st.metric("Order ID", summary["order_id"])
-                                    st.metric("Target AGV", summary["target_agv"])
-                                with col2:
-                                    st.metric("Nodes", summary["total_nodes"])
-                                    st.metric("Edges", summary["total_edges"])
-                                with col3:
-                                    st.metric("Released Nodes", summary["released_nodes"])
-                                    st.metric("Released Edges", summary["released_edges"])
-                                
-                                # Show JSON preview
-                                with st.expander("🔍 VDA5050 Order JSON Preview"):
-                                    import json
-                                    order_json = vda5050_order.model_dump_json(indent=2)
-                                    st.code(order_json, language="json")
+                                # Store order for display outside the column
+                                st.session_state.vda5050_order_preview = vda5050_order
                                     
                         except Exception as e:
                             st.warning(f"⚠️ Cannot create VDA5050 Order preview: {str(e)}")
@@ -509,6 +491,34 @@ def render_mission_dispatch():
             
             st.pydeck_chart(r, height=400)
             st.info("📍 Use the form on the left to add waypoints and see them on the map")
+    
+    st.markdown("---")
+    
+    # VDA5050 Order Summary (displayed below the two-column layout)
+    if hasattr(st.session_state, 'vda5050_order_preview') and st.session_state.vda5050_order_preview:
+        vda5050_order = st.session_state.vda5050_order_preview
+        summary = create_mission_summary(vda5050_order)
+        
+        st.markdown("**📋 VDA5050 Order Summary:**")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Order ID", summary["order_id"])
+            st.metric("Target AGV", summary["target_agv"])
+        with col2:
+            st.metric("Nodes", summary["total_nodes"])
+            st.metric("Edges", summary["total_edges"])
+        with col3:
+            st.metric("Released Nodes", summary["released_nodes"])
+            st.metric("Released Edges", summary["released_edges"])
+        
+        # Show JSON preview
+        with st.expander("🔍 VDA5050 Order JSON Preview"):
+            import json
+            order_json = vda5050_order.model_dump_json(indent=2)
+            st.code(order_json, language="json")
+        
+        # Clear the preview after display
+        del st.session_state.vda5050_order_preview
     
     st.markdown("---")
     
