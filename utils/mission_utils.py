@@ -3,6 +3,7 @@
 import re
 from typing import List, Dict, Any
 from datetime import datetime, timezone
+from config import load_config
 
 
 def parse_nodes_input(nodes_text: str) -> List[Dict[str, Any]]:
@@ -105,6 +106,16 @@ def validate_nodes(nodes: List[Dict[str, Any]]) -> List[str]:
         errors.append("No nodes provided")
         return errors
     
+    # Load config for mission limits
+    config = load_config()
+    mission_config = config.get("mission", {})
+    max_nodes = mission_config.get("max_nodes_per_mission", 100)
+    
+    # Check maximum nodes limit
+    if len(nodes) > max_nodes:
+        errors.append(f"Too many nodes: {len(nodes)} (maximum: {max_nodes})")
+        return errors
+    
     # Check minimum distance between consecutive nodes
     for i in range(len(nodes) - 1):
         current = nodes[i]
@@ -147,16 +158,21 @@ def format_nodes_preview(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return preview_data
 
 
-def generate_order_id(prefix: str = "ORDER") -> str:
+def generate_order_id(prefix: str = None) -> str:
     """
     Generate a unique order ID with timestamp.
     
     Args:
-        prefix: Order ID prefix (default: "ORDER")
+        prefix: Order ID prefix (if None, uses config default)
         
     Returns:
         Unique order ID string
     """
+    if prefix is None:
+        config = load_config()
+        mission_config = config.get("mission", {})
+        prefix = mission_config.get("default_order_prefix", "ORDER")
+    
     timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
     return f"{prefix}-{timestamp}"
 

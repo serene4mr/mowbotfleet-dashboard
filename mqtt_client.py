@@ -7,6 +7,7 @@ from typing import Dict
 from vda5050.clients.master_control import MasterControlClient
 from vda5050.models.state import State
 from models import AGVInfo, ErrorInfo
+from config import load_config
 
 # Shared application state
 fleet_state: Dict[str, AGVInfo] = {}
@@ -100,11 +101,15 @@ def _connect_in_thread(broker_url: str, username: str, password: str, client_id:
                 # Invalid broker URL format
                 return
             
+            # Load config for general client settings
+            config = load_config()
+            general_config = config.get("general", {})
+            
             # Initialize MasterControlClient with required parameters
             _client = MasterControlClient(
                 broker_url=broker_host,
-                manufacturer="MowbotAI",
-                serial_number="MowbotFleetClient",
+                manufacturer=general_config.get("manufacturer", "MowbotAI"),
+                serial_number=general_config.get("serial_number", "MowbotFleetClient"),
                 broker_port=broker_port,
                 username=username if username else None,
                 password=password if password else None,

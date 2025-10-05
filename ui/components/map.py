@@ -4,6 +4,7 @@ import streamlit as st
 import pydeck as pdk
 from mqtt_client import fleet_state
 import urllib.parse
+from config import load_config
 
 def create_arrow_icon(color, is_selected=False):
     """Create an SVG arrow icon with the specified color and selection state"""
@@ -57,6 +58,11 @@ def render_map():
     Auto-refreshes every 1 second to show latest AGV positions.
     Always displays the map, even when no AGVs are connected.
     """
+    
+    # Load config for UI settings
+    config = load_config()
+    ui_config = config.get("ui", {})
+    dashboard_config = config.get("dashboard", {})
 
     # Prepare data for PyDeck
     map_data = []
@@ -135,7 +141,7 @@ def render_map():
         view_state = pdk.ViewState(
             longitude=lon,
             latitude=lat,
-            zoom=16,  # Closer zoom for selected AGV
+            zoom=ui_config.get("map_default_zoom", 16),  # Use config zoom level
             pitch=0
         )
     elif map_data:
@@ -143,15 +149,16 @@ def render_map():
         view_state = pdk.ViewState(
             longitude=map_data[0]["lon"],
             latitude=map_data[0]["lat"],
-            zoom=15,
+            zoom=ui_config.get("map_default_zoom", 15),
             pitch=0
         )
     else:
-        # Default Seoul coordinates
+        # Default coordinates from config
+        map_center = dashboard_config.get("map_default_center", {})
         view_state = pdk.ViewState(
-            longitude=127.0567,
-            latitude=37.5075,
-            zoom=12,
+            longitude=map_center.get("lon", 127.0567),
+            latitude=map_center.get("lat", 37.5075),
+            zoom=ui_config.get("map_default_zoom", 12),
             pitch=0
         )
 

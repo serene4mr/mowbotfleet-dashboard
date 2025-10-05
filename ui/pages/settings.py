@@ -10,8 +10,35 @@ from streamlit.runtime.scriptrunner import RerunException, RerunData
 def render_settings():
     st.header("Settings")
 
-    # Load and display current broker config
+    # Load config
     cfg = load_config()
+    
+    # General Configuration (displayed first)
+    st.subheader("General Configuration")
+    st.caption("Fleet client identification settings")
+    
+    # General settings
+    manufacturer = st.text_input("Manufacturer", value=cfg["general"]["manufacturer"])
+    serial_number = st.text_input("Serial Number", value=cfg["general"]["serial_number"])
+    
+    if st.button("💾 Save General Settings"):
+        # Update general settings
+        new_cfg = cfg.copy()
+        new_cfg["general"]["manufacturer"] = manufacturer
+        new_cfg["general"]["serial_number"] = serial_number
+        
+        # Save only the general settings
+        general_config = {
+            "general": new_cfg["general"]
+        }
+        save_config(general_config)
+        
+        st.success("General settings saved.")
+        st.info("⚠️ Changes will take effect after MQTT reconnection.")
+
+    st.markdown("---")
+    
+    # Broker Configuration
     st.subheader("Broker Configuration")
     host = st.text_input("Broker Host", value=cfg["broker"]["host"])
     port = st.number_input("Broker Port", value=cfg["broker"]["port"])

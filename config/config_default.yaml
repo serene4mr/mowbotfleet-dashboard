@@ -31,10 +31,13 @@ ui:
   table_page_size: 50            # Rows per page in data tables
   session_timeout_minutes: 480   # User session timeout (8 hours)
 
-# Dashboard Metadata
+# General Configuration
+general:
+  manufacturer: "MowbotAI"       # Fleet client manufacturer identifier
+  serial_number: "MowbotFleetClient" # Fleet client serial number
+
+# Dashboard UI Configuration  
 dashboard:
-  manufacturer: "MowbotAI"       # VDA5050 manufacturer identifier
-  serial_number: "MowbotFleetClient" # VDA5050 client serial number
   map_default_center:            # Default map center coordinates
     lat: 37.5075                 # Seoul latitude (example location)
     lon: 127.0567                # Seoul longitude (example location)
