@@ -429,13 +429,13 @@ def render_mission_dispatch():
                         'node_id': node['nodeId'],
                         'heading': node['theta'],
                         'sequence': i + 1,
-                        'color': [0, 0, 255] if i == 0 else [255, 0, 0] if i == len(st.session_state.mission_nodes_list)-1 else [0, 255, 0]
+                        'color': [255, 0, 0]  # All waypoints red
                     })
                 
                 # Add heading arrow (if heading is not zero and coordinates are valid)
                 if node['theta'] != 0 and -180 <= x_coord <= 180 and -90 <= y_coord <= 90:
                     # Create arrow using line segments
-                    arrow_length = 0.0001  # Extra short arrow length
+                    arrow_length = 0.00005  # 50% shorter arrow length
                     arrow_width = 0.0002   # Arrow width
                     
                     # Main arrow line (shaft)
@@ -514,7 +514,7 @@ def render_mission_dispatch():
                     data=path_data,
                     get_path='path',
                     get_color='color',
-                    get_width=10,
+                    get_width=2,
                     pickable=False
                 )
             
@@ -543,11 +543,7 @@ def render_mission_dispatch():
                 initial_view_state=view_state,
                 layers=layers,
                 tooltip={
-                    'html': '<b>Node {sequence}: {node_id}</b><br/>X (Lon): {lon:.6f}<br/>Y (Lat): {lat:.6f}<br/>Heading: {heading:.3f} rad',
-                    'style': {
-                        'backgroundColor': 'steelblue',
-                        'color': 'white'
-                    }
+                    'text': 'Node: {node_id}\nX: {lon}\nY: {lat}\nHeading: {heading}'
                 }
             )
             
