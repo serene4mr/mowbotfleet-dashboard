@@ -181,6 +181,10 @@ def is_connected():
     """Check if MQTT client is connected"""
     return _client is not None and _connection_task is not None and _connection_task.is_alive()
 
+def get_client():
+    """Get the current MQTT client instance"""
+    return _client if is_connected() else None
+
 def get_debug_info():
     """Get debug information about the MQTT connection"""
     return {

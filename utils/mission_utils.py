@@ -1,9 +1,13 @@
 # utils/mission_utils.py
 
 import re
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 from config import load_config
+
+# VDA5050 imports
+from vda5050.models.order import Order, Node, Edge, NodePosition
+from vda5050.models.base import Action, BlockingType
 
 
 def parse_nodes_input(nodes_text: str) -> List[Dict[str, Any]]:
@@ -195,3 +199,128 @@ def validate_order_id(order_id: str) -> bool:
     # Allow alphanumeric with hyphens and underscores
     pattern = r'^[A-Za-z0-9_-]+$'
     return bool(re.match(pattern, order_id.strip()))
+
+
+def create_vda5050_order(
+    order_id: str,
+    target_manufacturer: str,
+    target_serial: str,
+    nodes: List[Dict[str, Any]],
+    version: str = "2.1.0",
+    header_id: int = 1
+) -> Order:
+    """
+    Create a VDA5050 Order message from parsed nodes.
+    
+    Args:
+        order_id: Unique order identifier
+        target_manufacturer: Target AGV manufacturer
+        target_serial: Target AGV serial number
+        nodes: List of parsed node dictionaries
+        version: VDA5050 protocol version
+        header_id: Header ID for the order
+        
+    Returns:
+        VDA5050 Order message object
+        
+    Raises:
+        ValueError: If nodes list is empty or invalid
+    """
+    if not nodes:
+        raise ValueError("Cannot create order with empty nodes list")
+    
+    # Create VDA5050 Node objects
+    vda5050_nodes = []
+    for i, node_data in enumerate(nodes):
+        # Create node position from parsed coordinates
+        node_position = NodePosition(
+            x=node_data['x'],
+            y=node_data['y'],
+            theta=node_data['theta'],
+            mapId='default_map'  # Default map ID for mission waypoints
+        )
+        
+        node = Node(
+            nodeId=node_data['nodeId'],
+            sequenceId=i * 2,  # Even numbers for nodes
+            released=True,  # All nodes are released for MVP
+            nodePosition=node_position,  # Include the actual coordinates
+            actions=[]  # No actions for MVP
+        )
+        vda5050_nodes.append(node)
+    
+    # Create VDA5050 Edge objects (connect consecutive nodes)
+    vda5050_edges = []
+    for i in range(len(nodes) - 1):
+        edge = Edge(
+            edgeId=f"edge_{nodes[i]['nodeId']}_to_{nodes[i+1]['nodeId']}",
+            sequenceId=i * 2 + 1,  # Odd numbers for edges
+            released=True,  # All edges are released for MVP
+            startNodeId=nodes[i]['nodeId'],
+            endNodeId=nodes[i+1]['nodeId'],
+            actions=[]  # No actions for MVP
+        )
+        vda5050_edges.append(edge)
+    
+    # Create VDA5050 Order
+    order = Order(
+        headerId=header_id,
+        timestamp=datetime.now(timezone.utc),
+        version=version,
+        manufacturer=target_manufacturer,
+        serialNumber=target_serial,
+        orderId=order_id,
+        orderUpdateId=0,  # Initial order
+        nodes=vda5050_nodes,
+        edges=vda5050_edges
+    )
+    
+    return order
+
+
+def create_mission_summary(order: Order) -> Dict[str, Any]:
+    """
+    Create a human-readable summary of the mission order.
+    
+    Args:
+        order: VDA5050 Order object
+        
+    Returns:
+        Dictionary with mission summary information
+    """
+    return {
+        "order_id": order.orderId,
+        "target_agv": f"{order.manufacturer}/{order.serialNumber}",
+        "total_nodes": len(order.nodes),
+        "total_edges": len(order.edges),
+        "released_nodes": len([n for n in order.nodes if n.released]),
+        "released_edges": len([e for e in order.edges if e.released]),
+        "timestamp": order.timestamp.isoformat(),
+        "version": order.version
+    }
+
+
+async def send_mission_order(order: Order, mqtt_client) -> bool:
+    """
+    Send a VDA5050 Order message via MQTT.
+    
+    Args:
+        order: VDA5050 Order object to send
+        mqtt_client: Connected MQTT client (MasterControlClient)
+        
+    Returns:
+        True if sent successfully, False otherwise
+    """
+    try:
+        # Use the MasterControlClient's send_order method
+        success = await mqtt_client.send_order(
+            target_manufacturer=order.manufacturer,
+            target_serial=order.serialNumber,
+            order=order
+        )
+        
+        return success
+        
+    except Exception as e:
+        # Log error (will be handled by calling code)
+        raise Exception(f"Failed to send order {order.orderId}: {str(e)}")

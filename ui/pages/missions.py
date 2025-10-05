@@ -11,8 +11,8 @@ def render_missions():
     """Render the Missions page"""
     st.markdown("### 🚀 Missions")
     
-    # Mission dispatch form
-    render_mission_dispatch()
+    # Mission status summary (top)
+    render_mission_status_summary()
     
     st.markdown("---")
     
@@ -21,5 +21,5 @@ def render_missions():
     
     st.markdown("---")
     
-    # Mission status summary
-    render_mission_status_summary()
+    # Mission dispatch form (bottom)
+    render_mission_dispatch()

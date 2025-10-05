@@ -3,84 +3,292 @@
 import streamlit as st
 from datetime import datetime
 from mqtt_client import fleet_state
+from utils.mission_utils import (
+    parse_nodes_input, validate_nodes, format_nodes_preview, generate_order_id,
+    create_vda5050_order, create_mission_summary, validate_order_id, send_mission_order
+)
+from config import load_config
 
 def render_mission_dispatch():
-    """Render mission dispatch form"""
+    """Render mission dispatch form with enhanced validation and AGV selection"""
     st.markdown("#### 📝 Dispatch New Mission")
     
+    # Handle form clearing flag
+    if st.session_state.get('mission_form_clear', False):
+        st.session_state.mission_nodes_input = ""
+        st.session_state.mission_order_id = generate_order_id()
+        st.session_state.mission_form_clear = False
+        st.rerun()
+    
+    # Load configuration for mission settings
+    config = load_config()
+    mission_config = config.get("mission", {})
+    
     if not fleet_state:
-        st.warning("No AGVs available for mission dispatch.")
+        st.warning("⚠️ No AGVs available for mission dispatch.")
+        st.info("Connect AGVs to the fleet to enable mission dispatch.")
         return
     
-    col1, col2 = st.columns([2, 1])
+    # Target AGV selection with enhanced display
+    st.markdown("**🎯 Target AGV Selection**")
     
-    with col1:
-        # Target AGV selection
-        agv_options = list(fleet_state.keys())
-        target_agv = st.selectbox(
-            "Target AGV:",
-            options=agv_options,
-            key="mission_target_agv"
-        )
+    # Create AGV options with enhanced information
+    agv_options = []
+    agv_display_names = []
     
-    with col2:
-        # Auto-generated Order ID
-        order_id = f"ORDER-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-        st.text_input(
-            "Order ID:",
-            value=order_id,
-            disabled=True,
-            key="mission_order_id"
-        )
+    for serial, agv in fleet_state.items():
+        # Get AGV manufacturer from factsheet or default
+        manufacturer = getattr(agv, 'manufacturer', 'Unknown')
+        battery_status = "🔋" if agv.battery > 20 else "⚠️"
+        mode_status = "🟢" if agv.operating_mode == "AUTOMATIC" else "🟡"
+        
+        display_name = f"{serial} ({manufacturer}) - {battery_status}{agv.battery:.0f}% {mode_status}"
+        agv_options.append(serial)
+        agv_display_names.append(display_name)
     
-    # Nodes input
-    st.markdown("**Nodes:** (Format: nodeId,x,y,theta)")
-    nodes_text = st.text_area(
-        "Enter nodes (one per line):",
-        placeholder="warehouse_pickup,10.5,20.3,0.0\ndelivery_zone_A,15.2,25.1,1.57\ncharging_station,5.0,5.0,3.14",
-        height=120,
-        key="mission_nodes_input"
+    # Default to dashboard selected AGV if available
+    default_idx = 0
+    dashboard_selected = st.session_state.get('selected_agv')
+    if dashboard_selected and dashboard_selected in agv_options:
+        default_idx = agv_options.index(dashboard_selected)
+    
+    target_agv = st.selectbox(
+        "Select Target AGV:",
+        options=agv_display_names,
+        index=default_idx,
+        key="mission_target_agv_display",
+        help="Select the AGV that will execute this mission"
     )
     
-    # Send mission button
-    col1, col2 = st.columns([1, 4])
+    # Get actual AGV serial from display name
+    target_agv_serial = agv_options[agv_display_names.index(target_agv)]
+    
+    # Display selected AGV details
+    if target_agv_serial in fleet_state:
+        agv = fleet_state[target_agv_serial]
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Battery", f"{agv.battery:.1f}%")
+        with col2:
+            st.metric("Mode", agv.operating_mode)
+        with col3:
+            st.metric("Position", f"({agv.position[0]:.1f}, {agv.position[1]:.1f})")
+        with col4:
+            error_count = len(getattr(agv, 'errors', []))
+            st.metric("Errors", error_count)
+    
+    st.markdown("---")
+    
+    # Order ID section
+    st.markdown("**📋 Mission Details**")
+    
+    # Order ID input
+    # Initialize session state if not exists
+    if 'mission_order_id' not in st.session_state:
+        st.session_state.mission_order_id = generate_order_id()
+    
+    order_id = st.text_input(
+        "Order ID:",
+        key="mission_order_id",
+        help="Unique identifier for this mission. Auto-generated if left as default."
+    )
+    
+    # Nodes input with enhanced validation
+    st.markdown("**🗺️ Mission Waypoints**")
+    
+    # Show format help
+    with st.expander("📖 Node Format Help"):
+        st.markdown("""
+        **Format:** `nodeId,x,y,theta` (one per line)
+        
+        **Example:**
+        ```
+        warehouse_pickup,10.5,20.3,0.0
+        delivery_zone_A,15.2,25.1,1.57
+        charging_station,5.0,5.0,3.14
+        ```
+        
+        **Parameters:**
+        - `nodeId`: Unique identifier for the waypoint
+        - `x`: X coordinate in meters
+        - `y`: Y coordinate in meters  
+        - `theta`: Orientation in radians (0 = North, π/2 = East)
+        """)
+    
+    # Load max nodes from config
+    max_nodes = mission_config.get("max_nodes_per_mission", 100)
+    
+    nodes_text = st.text_area(
+        f"Enter nodes (max {max_nodes}):",
+        placeholder="warehouse_pickup,10.5,20.3,0.0\ndelivery_zone_A,15.2,25.1,1.57\ncharging_station,5.0,5.0,3.14",
+        height=120,
+        key="mission_nodes_input",
+        help=f"Enter up to {max_nodes} waypoints for this mission"
+    )
+    
+    # Real-time validation and preview
+    if nodes_text.strip():
+        try:
+            nodes = parse_nodes_input(nodes_text)
+            validation_errors = validate_nodes(nodes)
+            
+            if validation_errors:
+                st.error("❌ Validation Errors:")
+                for error in validation_errors:
+                    st.error(f"• {error}")
+            else:
+                st.success(f"✅ Valid mission with {len(nodes)} waypoints")
+                
+                # Show mission preview
+                with st.expander("👁️ Mission Preview"):
+                    preview_data = format_nodes_preview(nodes)
+                    st.dataframe(
+                        preview_data,
+                        width='stretch',
+                        hide_index=True
+                    )
+                
+                # Show VDA5050 Order preview if we have a valid target AGV
+                if target_agv_serial and order_id.strip():
+                    try:
+                        # Get AGV manufacturer (from factsheet or default)
+                        agv = fleet_state[target_agv_serial]
+                        manufacturer = getattr(agv, 'manufacturer', 'Unknown')
+                        
+                        # Validate order ID
+                        if not validate_order_id(order_id):
+                            st.warning("⚠️ Invalid Order ID format")
+                        else:
+                            # Create VDA5050 Order
+                            vda5050_order = create_vda5050_order(
+                                order_id=order_id,
+                                target_manufacturer=manufacturer,
+                                target_serial=target_agv_serial,
+                                nodes=nodes
+                            )
+                            
+                            # Show VDA5050 Order summary
+                            summary = create_mission_summary(vda5050_order)
+                            
+                            st.markdown("**📋 VDA5050 Order Summary:**")
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                st.metric("Order ID", summary["order_id"])
+                                st.metric("Target AGV", summary["target_agv"])
+                            with col2:
+                                st.metric("Nodes", summary["total_nodes"])
+                                st.metric("Edges", summary["total_edges"])
+                            with col3:
+                                st.metric("Released Nodes", summary["released_nodes"])
+                                st.metric("Released Edges", summary["released_edges"])
+                            
+                            # Show JSON preview
+                            with st.expander("🔍 VDA5050 Order JSON Preview"):
+                                import json
+                                order_json = vda5050_order.model_dump_json(indent=2)
+                                st.code(order_json, language="json")
+                                
+                    except Exception as e:
+                        st.warning(f"⚠️ Cannot create VDA5050 Order preview: {str(e)}")
+                        
+        except Exception as e:
+            st.error(f"❌ Parsing Error: {str(e)}")
+    
+    st.markdown("---")
+    
+    # Mission dispatch controls
+    col1, col2, col3 = st.columns([1, 1, 3])
     
     with col1:
-        if st.button("🚀 Send Mission", type="primary"):
-            if nodes_text.strip():
+        send_enabled = (
+            nodes_text.strip() and 
+            target_agv_serial and 
+            order_id.strip()
+        )
+        
+        if st.button("🚀 Send Mission", type="primary", disabled=not send_enabled):
+            try:
+                # Parse and validate nodes
+                nodes = parse_nodes_input(nodes_text)
+                validation_errors = validate_nodes(nodes)
+                
+                if validation_errors:
+                    st.error("Cannot send mission with validation errors")
+                    return
+                
+                # Validate order ID
+                if not validate_order_id(order_id):
+                    st.error("Invalid Order ID format")
+                    return
+                
+                # Get AGV manufacturer
+                agv = fleet_state[target_agv_serial]
+                manufacturer = getattr(agv, 'manufacturer', 'Unknown')
+                
+                # Create VDA5050 Order
+                vda5050_order = create_vda5050_order(
+                    order_id=order_id,
+                    target_manufacturer=manufacturer,
+                    target_serial=target_agv_serial,
+                    nodes=nodes
+                )
+                
+                # Send mission via MQTT
+                from mqtt_client import get_client
+                mqtt_client = get_client()
+                
+                if not mqtt_client or not mqtt_client.is_connected():
+                    st.error("❌ MQTT client not connected. Cannot send mission.")
+                    st.info("Please check broker connection in Settings.")
+                    return
+                
+                # Send the order via MQTT
+                import asyncio
                 try:
-                    # Parse nodes
-                    nodes = parse_nodes(nodes_text)
-                    if nodes:
-                        # Send mission (placeholder for now)
-                        st.success(f"Mission {order_id} sent to {target_agv}")
-                        st.rerun()
+                    # Run the async send function
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    success = loop.run_until_complete(send_mission_order(vda5050_order, mqtt_client))
+                    loop.close()
+                    
+                    if success:
+                        # Store mission in session state for tracking
+                        if 'active_missions' not in st.session_state:
+                            st.session_state.active_missions = {}
+                        
+                        mission_summary = create_mission_summary(vda5050_order)
+                        st.session_state.active_missions[order_id] = {
+                            'order': vda5050_order,
+                            'summary': mission_summary,
+                            'status': 'sent',
+                            'created_at': datetime.now(),
+                            'sent_at': datetime.now()
+                        }
+                        
+                        st.success(f"✅ Mission '{order_id}' sent successfully!")
+                        st.info(f"📡 Target: {manufacturer}/{target_agv_serial}")
+                        st.info(f"🗺️ Waypoints: {len(nodes)} nodes, {len(nodes)-1} edges")
+                        st.info("📋 Mission sent via MQTT and stored for tracking")
                     else:
-                        st.error("Please enter valid nodes.")
-                except Exception as e:
-                    st.error(f"Failed to send mission: {str(e)}")
-            else:
-                st.error("Please enter at least one node.")
+                        st.error("❌ Failed to send mission via MQTT")
+                        
+                except Exception as mqtt_error:
+                    st.error(f"❌ MQTT Error: {str(mqtt_error)}")
+                    st.info("Mission created but not sent. Check MQTT connection.")
+                
+                # Set flag to clear form on next render
+                st.session_state.mission_form_clear = True
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"❌ Failed to create mission: {str(e)}")
     
     with col2:
         if st.button("🗑️ Clear Form"):
+            # Set flag to clear form on next render
+            st.session_state.mission_form_clear = True
             st.rerun()
-
-def parse_nodes(nodes_text: str) -> list:
-    """Parse nodes from text input"""
-    nodes = []
-    for line in nodes_text.strip().split('\n'):
-        if line.strip():
-            parts = line.strip().split(',')
-            if len(parts) >= 4:
-                try:
-                    node = {
-                        'nodeId': parts[0].strip(),
-                        'x': float(parts[1].strip()),
-                        'y': float(parts[2].strip()),
-                        'theta': float(parts[3].strip())
-                    }
-                    nodes.append(node)
-                except ValueError:
-                    continue
-    return nodes
+    
+    with col3:
+        st.caption("💡 Tip: Use the dashboard to select an AGV, then dispatch missions to it")
