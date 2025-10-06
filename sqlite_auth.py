@@ -9,12 +9,15 @@ from pathlib import Path
 class SQLiteAuth:
     """SQLite-based authentication system"""
     
-    def __init__(self, db_path: str = "users.db"):
+    def __init__(self, db_path: str = "data/users.db"):
         self.db_path = db_path
         self.init_database()
     
     def init_database(self):
         """Initialize the SQLite database with users table"""
+        # Ensure the data directory exists
+        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+        
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             

@@ -180,7 +180,7 @@ def list_users() -> list:
 # Backward compatibility - these functions are now just aliases
 def get_users_file_path():
     """Backward compatibility - returns database path instead of YAML file path"""
-    return "users.db"
+    return "data/users.db"
 
 def hash_password(password: str) -> str:
     """Hash password using bcrypt"""
