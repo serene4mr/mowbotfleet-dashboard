@@ -16,7 +16,7 @@ route_logger = get_logger("mission_route_manager")
 class MissionRouteManager:
     """Mission route management system"""
     
-    def __init__(self, db_path: str = "data/users.db"):
+    def __init__(self, db_path: str = "data/mission_routes.db"):
         self.db_path = db_path
         self.init_database()
     
