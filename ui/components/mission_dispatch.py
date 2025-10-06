@@ -484,61 +484,65 @@ def render_mission_dispatch():
                                 pass
         else:
             st.info("ℹ️ No saved routes found. Save a route first to load it later.")
-            
-            # Mission validation
-            try:
-                validation_result = validate_nodes(st.session_state.mission_nodes_list)
-                
-                # Handle both errors and warnings
-                if isinstance(validation_result, tuple):
-                    validation_errors, validation_warnings = validation_result
-                else:
-                    # Backward compatibility for old function signature
-                    validation_errors = validation_result
-                    validation_warnings = []
-                
-                if validation_errors:
-                    st.error("❌ Mission Validation Errors:")
-                    for error in validation_errors:
-                        st.error(f"• {error}")
-                
-                if validation_warnings:
-                    st.warning("⚠️ Mission Validation Warnings:")
-                    for warning in validation_warnings:
-                        st.warning(f"• {warning}")
-                
-                if not validation_errors:
-                    st.success(f"✅ Valid mission with {len(st.session_state.mission_nodes_list)} waypoints")
-                    
-                    # Show VDA5050 Order preview if we have a valid target AGV
-                    if target_agv_serial and order_id.strip():
-                        try:
-                            # Get AGV manufacturer (from factsheet or default)
-                            agv = fleet_state[target_agv_serial]
-                            manufacturer = getattr(agv, 'manufacturer', 'Unknown')
-                            
-                            # Validate order ID
-                            if not validate_order_id(order_id):
-                                st.warning("⚠️ Invalid Order ID format")
-                            else:
-                                # Create VDA5050 Order
-                                vda5050_order = create_vda5050_order(
-                                    order_id=order_id,
-                                    target_manufacturer=manufacturer,
-                                    target_serial=target_agv_serial,
-                                    nodes=st.session_state.mission_nodes_list
-                                )
-                                
-                                # Store order for display outside the column
-                                st.session_state.vda5050_order_preview = vda5050_order
-                                    
-                        except Exception as e:
-                            st.warning(f"⚠️ Cannot create VDA5050 Order preview: {str(e)}")
-                            
-            except Exception as e:
-                st.error(f"❌ Error validating mission: {str(e)}")
+    
+    # Mission validation section
+    st.markdown("---")
+    st.markdown("**✅ Mission Validation**")
+    
+    try:
+        validation_result = validate_nodes(st.session_state.mission_nodes_list)
+        
+        # Handle both errors and warnings
+        if isinstance(validation_result, tuple):
+            validation_errors, validation_warnings = validation_result
         else:
-            st.info("💡 Add nodes above to create a mission")
+            # Backward compatibility for old function signature
+            validation_errors = validation_result
+            validation_warnings = []
+        
+        if validation_errors:
+            st.error("❌ Mission Validation Errors:")
+            for error in validation_errors:
+                st.error(f"• {error}")
+        
+        if validation_warnings:
+            st.warning("⚠️ Mission Validation Warnings:")
+            for warning in validation_warnings:
+                st.warning(f"• {warning}")
+        
+        if not validation_errors:
+            st.success(f"✅ Valid mission with {len(st.session_state.mission_nodes_list)} waypoints")
+            
+            # Show VDA5050 Order preview if we have a valid target AGV
+            if target_agv_serial and order_id.strip():
+                try:
+                    # Get AGV manufacturer (from factsheet or default)
+                    agv = fleet_state[target_agv_serial]
+                    manufacturer = getattr(agv, 'manufacturer', 'Unknown')
+                    
+                    # Validate order ID
+                    if not validate_order_id(order_id):
+                        st.warning("⚠️ Invalid Order ID format")
+                    else:
+                        # Create VDA5050 Order
+                        vda5050_order = create_vda5050_order(
+                            order_id=order_id,
+                            target_manufacturer=manufacturer,
+                            target_serial=target_agv_serial,
+                            nodes=st.session_state.mission_nodes_list
+                        )
+                        
+                        # Store order for display outside the column
+                        st.session_state.vda5050_order_preview = vda5050_order
+                            
+                except Exception as e:
+                    st.warning(f"⚠️ Cannot create VDA5050 Order preview: {str(e)}")
+                    
+    except Exception as e:
+        st.error(f"❌ Error validating mission: {str(e)}")
+    
+    if len(st.session_state.mission_nodes_list) == 0:
+        st.info("💡 Add nodes above to create a mission")
     
     with col_right:
         st.markdown("**🗺️ Mission Map**")
