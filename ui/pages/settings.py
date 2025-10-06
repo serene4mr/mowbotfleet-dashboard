@@ -4,7 +4,7 @@ import streamlit as st
 import asyncio
 from config import load_config, save_config, get_broker_url
 from mqtt_client import connect, disconnect
-from auth import add_or_update_user, list_users, delete_user, get_user_count, ensure_default_admin
+from auth import add_or_update_user, list_users, delete_user, get_user_count, ensure_default_admin, verify_user
 from streamlit.runtime.scriptrunner import RerunException, RerunData
 
 def render_settings():
@@ -197,34 +197,53 @@ def render_settings():
             if st.session_state.get(f"editing_{username}", False):
                 st.markdown(f"#### ✏️ Editing User: {username}")
                 
+                # Password change form with current password verification
                 col1, col2 = st.columns(2)
                 with col1:
+                    current_password = st.text_input(
+                        f"Current Password",
+                        type="password",
+                        key=f"current_pass_{username}",
+                        placeholder="Enter current password"
+                    )
+                
+                with col2:
                     new_password = st.text_input(
-                        f"New Password for {username}",
+                        f"New Password",
                         type="password",
                         key=f"new_pass_{username}",
                         placeholder="Enter new password"
                     )
                 
-                with col2:
-                    st.write("")  # Spacing
-                    col2_1, col2_2 = st.columns(2)
-                    with col2_1:
-                        if st.button("💾 Save", key=f"save_{username}"):
-                            if new_password:
+                # Action buttons
+                col3, col4 = st.columns(2)
+                with col3:
+                    if st.button("💾 Save Changes", key=f"save_{username}"):
+                        # Validate inputs
+                        if not current_password:
+                            st.error("Current password is required")
+                        elif not new_password:
+                            st.error("New password is required")
+                        else:
+                            # Verify current password
+                            if verify_user(username, current_password):
+                                # Current password is correct, update to new password
                                 if add_or_update_user(username, new_password):
-                                    st.success(f"Password updated for {username}")
+                                    st.success(f"✅ Password updated successfully for {username}")
                                     st.session_state[f"editing_{username}"] = False
                                     st.rerun()
                                 else:
-                                    st.error(f"Failed to update password for {username}")
+                                    st.error(f"❌ Failed to update password for {username}")
                             else:
-                                st.error("Password cannot be empty")
-                    
-                    with col2_2:
-                        if st.button("❌ Cancel", key=f"cancel_{username}"):
-                            st.session_state[f"editing_{username}"] = False
-                            st.rerun()
+                                st.error("❌ Current password is incorrect. Cannot update password.")
+                
+                with col4:
+                    if st.button("❌ Cancel", key=f"cancel_{username}"):
+                        st.session_state[f"editing_{username}"] = False
+                        st.rerun()
+                
+                # Help text
+                st.info("🔒 **Security:** You must enter the current password correctly to change it to a new password.")
             
             # Delete confirmation (shown when delete button is clicked)
             if st.session_state.get("user_to_delete") == username:
