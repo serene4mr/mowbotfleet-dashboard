@@ -191,7 +191,7 @@ def render_settings():
                     st.button("🔒", key=f"delete_{username}", disabled=True, help="Cannot delete admin user")
                 else:
                     if st.button("🗑️", key=f"delete_{username}", help="Delete user"):
-                        st.session_state[f"delete_{username}"] = True
+                        st.session_state["user_to_delete"] = username
             
             # Edit user form (shown when edit button is clicked)
             if st.session_state.get(f"editing_{username}", False):
@@ -227,21 +227,21 @@ def render_settings():
                             st.rerun()
             
             # Delete confirmation (shown when delete button is clicked)
-            if st.session_state.get(f"delete_{username}", False):
+            if st.session_state.get("user_to_delete") == username:
                 st.error(f"⚠️ Are you sure you want to delete user '{username}'?")
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button("✅ Yes, Delete", key=f"confirm_delete_{username}"):
                         if delete_user(username):
                             st.success(f"User '{username}' deleted successfully")
-                            st.session_state[f"delete_{username}"] = False
+                            st.session_state["user_to_delete"] = None
                             st.rerun()
                         else:
                             st.error(f"Failed to delete user '{username}'")
                 
                 with col2:
                     if st.button("❌ Cancel", key=f"cancel_delete_{username}"):
-                        st.session_state[f"delete_{username}"] = False
+                        st.session_state["user_to_delete"] = None
                         st.rerun()
         
         st.markdown("---")
