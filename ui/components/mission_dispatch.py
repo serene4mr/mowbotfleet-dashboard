@@ -454,9 +454,13 @@ def render_mission_dispatch():
                         st.caption(f"📝 {route_descriptions[route_name]}")
             
             with col2:
+                # Initialize confirmation state if not exists
+                if 'show_load_confirmation' not in st.session_state:
+                    st.session_state.show_load_confirmation = False
+                
                 # Check if we need to show confirmation dialog
-                if len(st.session_state.mission_nodes_list) > 0:
-                    # Show confirmation dialog first
+                if st.session_state.show_load_confirmation and len(st.session_state.mission_nodes_list) > 0:
+                    # Show confirmation dialog
                     st.warning("⚠️ Loading a route will replace your current nodes.")
                     col_yes, col_no = st.columns(2)
                     
@@ -465,18 +469,25 @@ def render_mission_dispatch():
                             if selected_route_display:
                                 # Extract route ID and load
                                 route_id = int(selected_route_display.split("ID: ")[1].rstrip(")"))
+                                st.session_state.show_load_confirmation = False  # Reset confirmation state
                                 load_route_data(route_id)
                     
                     with col_no:
                         if st.button("❌ Cancel", key="cancel_load_route", use_container_width=True):
-                            pass  # Just dismiss the dialog
+                            st.session_state.show_load_confirmation = False  # Reset confirmation state
+                            st.rerun()
                 else:
-                    # No existing nodes, load directly
+                    # Show normal load button
                     if st.button("📂 Load Route", use_container_width=True):
                         if selected_route_display:
-                            # Extract route ID
-                            route_id = int(selected_route_display.split("ID: ")[1].rstrip(")"))
-                            load_route_data(route_id)
+                            if len(st.session_state.mission_nodes_list) > 0:
+                                # Show confirmation dialog on next render
+                                st.session_state.show_load_confirmation = True
+                                st.rerun()
+                            else:
+                                # No existing nodes, load directly
+                                route_id = int(selected_route_display.split("ID: ")[1].rstrip(")"))
+                                load_route_data(route_id)
             
             with col3:
                 if st.button("🗑️ Delete Route", use_container_width=True, type="secondary"):
