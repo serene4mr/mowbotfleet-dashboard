@@ -5,12 +5,135 @@ Handles user verification and user creation/update with SQLite database storage.
 """
 
 import bcrypt
-from typing import Dict
+import sqlite3
+from typing import Dict, Optional, List, Tuple
+from pathlib import Path
 from utils.logging_utils import get_logger
-from sqlite_auth import get_sqlite_auth
 
 # Get logger for auth operations
 auth_logger = get_logger("auth")
+
+class SQLiteAuth:
+    """SQLite-based authentication system"""
+    
+    def __init__(self, db_path: str = "data/users.db"):
+        self.db_path = db_path
+        self.init_database()
+    
+    def init_database(self):
+        """Initialize the SQLite database with users table"""
+        # Ensure the data directory exists
+        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+        
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            # Create users table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    username TEXT PRIMARY KEY,
+                    password_hash TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            conn.commit()
+            auth_logger.info("SQLite users table initialized")
+    
+    def add_user(self, username: str, password: str) -> bool:
+        """Add a new user to the database"""
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+                    (username, hashed_password)
+                )
+                conn.commit()
+                auth_logger.info(f"User '{username}' added successfully")
+                return True
+            except sqlite3.IntegrityError:
+                auth_logger.warning(f"User '{username}' already exists")
+                return False
+            except Exception as e:
+                auth_logger.error(f"Error adding user '{username}': {e}")
+                return False
+    
+    def get_user(self, username: str) -> Optional[Dict[str, str]]:
+        """Get user information by username"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT username, password_hash, created_at, updated_at FROM users WHERE username = ?",
+                (username,)
+            )
+            user = cursor.fetchone()
+            
+            if user:
+                return {
+                    'username': user[0],
+                    'password_hash': user[1],
+                    'created_at': user[2],
+                    'updated_at': user[3]
+                }
+            return None
+    
+    def verify_user(self, username: str, password: str) -> bool:
+        """Verify user credentials"""
+        user = self.get_user(username)
+        if user:
+            return bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8'))
+        return False
+    
+    def update_user(self, username: str, password: str) -> bool:
+        """Update user password"""
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?",
+                (hashed_password, username)
+            )
+            
+            if cursor.rowcount > 0:
+                conn.commit()
+                auth_logger.info(f"User '{username}' updated successfully")
+                return True
+            else:
+                auth_logger.warning(f"User '{username}' not found for update")
+                return False
+    
+    def delete_user(self, username: str) -> bool:
+        """Delete a user from the database"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM users WHERE username = ?", (username,))
+            
+            if cursor.rowcount > 0:
+                conn.commit()
+                auth_logger.info(f"User '{username}' deleted successfully")
+                return True
+            else:
+                auth_logger.warning(f"User '{username}' not found for deletion")
+                return False
+    
+    def list_users(self) -> List[Tuple[str, str, str]]:
+        """List all users with their timestamps"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT username, created_at, updated_at FROM users ORDER BY username")
+            return cursor.fetchall()
+    
+    def get_user_count(self) -> int:
+        """Get total number of users"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM users")
+            return cursor.fetchone()[0]
 
 # Global SQLite auth instance
 _sqlite_auth = None
@@ -19,163 +142,64 @@ def _get_sqlite_auth():
     """Get SQLite auth instance"""
     global _sqlite_auth
     if _sqlite_auth is None:
-        _sqlite_auth = get_sqlite_auth()
+        _sqlite_auth = SQLiteAuth()
     return _sqlite_auth
 
-def load_users() -> Dict[str, str]:
-    """
-    Load users from the SQLite database.
-    
-    Returns:
-        Dictionary of username -> hashed_password
-    """
-    try:
-        sqlite_auth = _get_sqlite_auth()
-        return sqlite_auth.load_users()
-    except Exception as e:
-        auth_logger.warning(f"Could not load users from database: {e}")
-        return {}
-
-def save_users(users: Dict[str, str]) -> None:
-    """
-    Save users to the SQLite database.
-    
-    Args:
-        users: Dictionary of username -> hashed_password
-        
-    Raises:
-        Exception: If database operation fails
-    """
-    try:
-        sqlite_auth = _get_sqlite_auth()
-        success = sqlite_auth.save_users(users)
-        if not success:
-            raise Exception("Failed to save users to database")
-    except Exception as e:
-        auth_logger.error(f"Could not save users to database: {e}")
-        raise
+# Public API functions - these maintain backward compatibility
 
 def verify_user(username: str, password: str) -> bool:
-    """
-    Verify user credentials against the SQLite database.
-    
-    Args:
-        username: Username to verify
-        password: Plain text password to verify
-        
-    Returns:
-        True if credentials are valid, False otherwise
-    """
+    """Verify user credentials against SQLite database"""
     try:
-        sqlite_auth = _get_sqlite_auth()
-        return sqlite_auth.verify_user(username, password)
+        auth = _get_sqlite_auth()
+        return auth.verify_user(username, password)
     except Exception as e:
-        auth_logger.error(f"Error verifying user {username}: {e}")
+        auth_logger.error(f"Error verifying user '{username}': {e}")
         return False
 
 def add_or_update_user(username: str, password: str) -> bool:
-    """
-    Add or update user in the SQLite database.
-    
-    Args:
-        username: Username to add/update
-        password: Plain text password to hash and store
-        
-    Returns:
-        True if successful, False otherwise
-    """
+    """Add new user or update existing user password"""
     try:
-        sqlite_auth = _get_sqlite_auth()
-        return sqlite_auth.add_or_update_user(username, password)
-    except Exception as e:
-        auth_logger.error(f"Error adding/updating user {username}: {e}")
-        return False
-
-def ensure_default_admin() -> None:
-    """
-    Ensure default admin user exists in the SQLite database.
-    Creates admin user with password 'admin' if no users exist.
-    """
-    try:
-        sqlite_auth = _get_sqlite_auth()
+        auth = _get_sqlite_auth()
+        user = auth.get_user(username)
         
-        # Check if any users exist
-        user_count = sqlite_auth.get_user_count()
-        
-        if user_count == 0:
-            # Create default admin user
-            success = sqlite_auth.add_or_update_user("admin", "admin")
-            if success:
-                auth_logger.info("Default admin user created successfully")
-            else:
-                auth_logger.error("Failed to create default admin user")
+        if user:
+            # User exists, update password
+            return auth.update_user(username, password)
         else:
-            auth_logger.info(f"Users already exist in database ({user_count} users)")
-            
+            # User doesn't exist, add new user
+            return auth.add_user(username, password)
     except Exception as e:
-        auth_logger.error(f"Error ensuring default admin: {e}")
-
-def delete_user(username: str) -> bool:
-    """
-    Delete user from the SQLite database.
-    
-    Args:
-        username: Username to delete
-        
-    Returns:
-        True if successful, False otherwise
-    """
-    try:
-        sqlite_auth = _get_sqlite_auth()
-        return sqlite_auth.delete_user(username)
-    except Exception as e:
-        auth_logger.error(f"Error deleting user {username}: {e}")
-        return False
-
-def user_exists(username: str) -> bool:
-    """
-    Check if user exists in the SQLite database.
-    
-    Args:
-        username: Username to check
-        
-    Returns:
-        True if user exists, False otherwise
-    """
-    try:
-        sqlite_auth = _get_sqlite_auth()
-        return sqlite_auth.user_exists(username)
-    except Exception as e:
-        auth_logger.error(f"Error checking if user {username} exists: {e}")
+        auth_logger.error(f"Error adding/updating user '{username}': {e}")
         return False
 
 def get_user_count() -> int:
-    """
-    Get total number of users in the SQLite database.
-    
-    Returns:
-        Number of users
-    """
+    """Get total number of users in database"""
     try:
-        sqlite_auth = _get_sqlite_auth()
-        return sqlite_auth.get_user_count()
+        auth = _get_sqlite_auth()
+        return auth.get_user_count()
     except Exception as e:
         auth_logger.error(f"Error getting user count: {e}")
         return 0
 
-def list_users() -> list:
-    """
-    List all users with their creation/update timestamps.
-    
-    Returns:
-        List of tuples (username, created_at, updated_at)
-    """
+def list_users() -> List[Tuple[str, str, str]]:
+    """List all users with timestamps"""
     try:
-        sqlite_auth = _get_sqlite_auth()
-        return sqlite_auth.list_users()
+        auth = _get_sqlite_auth()
+        return auth.list_users()
     except Exception as e:
         auth_logger.error(f"Error listing users: {e}")
         return []
+
+def ensure_default_admin() -> None:
+    """Ensure default admin user exists"""
+    try:
+        auth = _get_sqlite_auth()
+        if not auth.get_user("admin"):
+            auth_logger.info("Creating default admin user...")
+            auth.add_user("admin", "admin")
+            auth_logger.info("Default admin user created")
+    except Exception as e:
+        auth_logger.error(f"Error ensuring default admin: {e}")
 
 # Backward compatibility - these functions are now just aliases
 def get_users_file_path():
@@ -185,10 +209,3 @@ def get_users_file_path():
 def hash_password(password: str) -> str:
     """Hash password using bcrypt"""
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
-def verify_password(password: str, hashed: str) -> bool:
-    """Verify password against hash"""
-    try:
-        return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
-    except:
-        return False
