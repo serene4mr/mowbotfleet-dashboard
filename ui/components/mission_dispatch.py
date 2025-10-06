@@ -454,22 +454,28 @@ def render_mission_dispatch():
                         st.caption(f"📝 {route_descriptions[route_name]}")
             
             with col2:
-                if st.button("📂 Load Route", use_container_width=True):
-                    if selected_route_display:
-                        # Extract route ID
-                        route_id = int(selected_route_display.split("ID: ")[1].rstrip(")"))
-                        
-                        # Confirmation dialog
-                        if len(st.session_state.mission_nodes_list) > 0:
-                            st.warning("⚠️ Loading a route will replace your current nodes.")
-                            col_yes, col_no = st.columns(2)
-                            with col_yes:
-                                if st.button("✅ Yes, Load Route", key="confirm_load_route"):
-                                    load_route_data(route_id)
-                            with col_no:
-                                if st.button("❌ Cancel", key="cancel_load_route"):
-                                    pass
-                        else:
+                # Check if we need to show confirmation dialog
+                if len(st.session_state.mission_nodes_list) > 0:
+                    # Show confirmation dialog first
+                    st.warning("⚠️ Loading a route will replace your current nodes.")
+                    col_yes, col_no = st.columns(2)
+                    
+                    with col_yes:
+                        if st.button("✅ Yes, Load Route", key="confirm_load_route", use_container_width=True):
+                            if selected_route_display:
+                                # Extract route ID and load
+                                route_id = int(selected_route_display.split("ID: ")[1].rstrip(")"))
+                                load_route_data(route_id)
+                    
+                    with col_no:
+                        if st.button("❌ Cancel", key="cancel_load_route", use_container_width=True):
+                            pass  # Just dismiss the dialog
+                else:
+                    # No existing nodes, load directly
+                    if st.button("📂 Load Route", use_container_width=True):
+                        if selected_route_display:
+                            # Extract route ID
+                            route_id = int(selected_route_display.split("ID: ")[1].rstrip(")"))
                             load_route_data(route_id)
             
             with col3:
