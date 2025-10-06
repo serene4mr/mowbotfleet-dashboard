@@ -1,70 +1,63 @@
 # auth.py
 """
 Enhanced Authentication logic for MowbotFleet Dashboard.
-Handles user verification and user creation/update with separate user storage.
+Handles user verification and user creation/update with SQLite database storage.
 """
 
 import bcrypt
-import yaml
-from pathlib import Path
 from typing import Dict
 from utils.logging_utils import get_logger
+from sqlite_auth import get_sqlite_auth
 
 # Get logger for auth operations
 auth_logger = get_logger("auth")
 
-def get_users_file_path() -> Path:
-    """Get the path to the users configuration file."""
-    return Path("config/users.yaml")
+# Global SQLite auth instance
+_sqlite_auth = None
+
+def _get_sqlite_auth():
+    """Get SQLite auth instance"""
+    global _sqlite_auth
+    if _sqlite_auth is None:
+        _sqlite_auth = get_sqlite_auth()
+    return _sqlite_auth
 
 def load_users() -> Dict[str, str]:
     """
-    Load users from the dedicated users.yaml file.
+    Load users from the SQLite database.
     
     Returns:
         Dictionary of username -> hashed_password
     """
-    users_path = get_users_file_path()
-    
-    if not users_path.exists():
-        return {}
-    
     try:
-        with open(users_path, 'r') as f:
-            data = yaml.safe_load(f) or {}
-            return data.get("users", {})
-    except (yaml.YAMLError, IOError) as e:
-        auth_logger.warning(f"Could not load users file: {e}")
+        sqlite_auth = _get_sqlite_auth()
+        return sqlite_auth.load_users()
+    except Exception as e:
+        auth_logger.warning(f"Could not load users from database: {e}")
         return {}
 
 def save_users(users: Dict[str, str]) -> None:
     """
-    Save users to the dedicated users.yaml file.
+    Save users to the SQLite database.
     
     Args:
         users: Dictionary of username -> hashed_password
         
     Raises:
-        IOError: If file cannot be written
-        yaml.YAMLError: If YAML serialization fails
+        Exception: If database operation fails
     """
-    users_path = get_users_file_path()
-    
-    # Create config directory if it doesn't exist
-    users_path.parent.mkdir(exist_ok=True)
-    
-    # Prepare data structure
-    data = {"users": users}
-    
     try:
-        with open(users_path, 'w') as f:
-            yaml.safe_dump(data, f, default_flow_style=False, indent=2)
-    except (yaml.YAMLError, IOError) as e:
-        raise IOError(f"Could not save users to {users_path}: {e}")
+        sqlite_auth = _get_sqlite_auth()
+        success = sqlite_auth.save_users(users)
+        if not success:
+            raise Exception("Failed to save users to database")
+    except Exception as e:
+        auth_logger.error(f"Could not save users to database: {e}")
+        raise
 
 def verify_user(username: str, password: str) -> bool:
     """
-    Check if the given username/password match the stored hash.
+    Verify user credentials against the SQLite database.
     
     Args:
         username: Username to verify
@@ -73,116 +66,129 @@ def verify_user(username: str, password: str) -> bool:
     Returns:
         True if credentials are valid, False otherwise
     """
-    users = load_users()
-    hashed = users.get(username)
-    
-    if not hashed:
-        return False
-    
     try:
-        result = bcrypt.checkpw(password.encode(), hashed.encode())
-        if result:
-            auth_logger.info(f"Login successful: {username}")
-        else:
-            auth_logger.warning(f"Login failed: {username} - Invalid password")
-        return result
+        sqlite_auth = _get_sqlite_auth()
+        return sqlite_auth.verify_user(username, password)
     except Exception as e:
-        auth_logger.error(f"Login error: {username} - {e}")
+        auth_logger.error(f"Error verifying user {username}: {e}")
         return False
 
-def add_or_update_user(username: str, password: str) -> None:
+def add_or_update_user(username: str, password: str) -> bool:
     """
-    Add a new user or update existing user's password hash.
+    Add or update user in the SQLite database.
     
     Args:
         username: Username to add/update
         password: Plain text password to hash and store
         
-    Raises:
-        IOError: If user file cannot be written
+    Returns:
+        True if successful, False otherwise
     """
-    users = load_users()
-    
-    # Generate secure hash
-    salt = bcrypt.gensalt()
-    new_hash = bcrypt.hashpw(password.encode(), salt).decode()
-    
-    # Update users dictionary
-    users[username] = new_hash
-    
-    # Save to file
-    save_users(users)
-    
-    # Log the operation
-    auth_logger.info(f"User created/updated: {username}")
+    try:
+        sqlite_auth = _get_sqlite_auth()
+        return sqlite_auth.add_or_update_user(username, password)
+    except Exception as e:
+        auth_logger.error(f"Error adding/updating user {username}: {e}")
+        return False
+
+def ensure_default_admin() -> None:
+    """
+    Ensure default admin user exists in the SQLite database.
+    Creates admin user with password 'admin' if no users exist.
+    """
+    try:
+        sqlite_auth = _get_sqlite_auth()
+        
+        # Check if any users exist
+        user_count = sqlite_auth.get_user_count()
+        
+        if user_count == 0:
+            # Create default admin user
+            success = sqlite_auth.add_or_update_user("admin", "admin")
+            if success:
+                auth_logger.info("Default admin user created successfully")
+            else:
+                auth_logger.error("Failed to create default admin user")
+        else:
+            auth_logger.info(f"Users already exist in database ({user_count} users)")
+            
+    except Exception as e:
+        auth_logger.error(f"Error ensuring default admin: {e}")
 
 def delete_user(username: str) -> bool:
     """
-    Delete a user from the system.
+    Delete user from the SQLite database.
     
     Args:
         username: Username to delete
         
     Returns:
-        True if user was deleted, False if user didn't exist
-        
-    Raises:
-        IOError: If user file cannot be written
+        True if successful, False otherwise
     """
-    users = load_users()
-    
-    if username not in users:
+    try:
+        sqlite_auth = _get_sqlite_auth()
+        return sqlite_auth.delete_user(username)
+    except Exception as e:
+        auth_logger.error(f"Error deleting user {username}: {e}")
         return False
+
+def user_exists(username: str) -> bool:
+    """
+    Check if user exists in the SQLite database.
     
-    # Remove user
-    del users[username]
+    Args:
+        username: Username to check
+        
+    Returns:
+        True if user exists, False otherwise
+    """
+    try:
+        sqlite_auth = _get_sqlite_auth()
+        return sqlite_auth.user_exists(username)
+    except Exception as e:
+        auth_logger.error(f"Error checking if user {username} exists: {e}")
+        return False
+
+def get_user_count() -> int:
+    """
+    Get total number of users in the SQLite database.
     
-    # Save to file
-    save_users(users)
-    
-    # Log the operation
-    auth_logger.info(f"User deleted: {username}")
-    return True
+    Returns:
+        Number of users
+    """
+    try:
+        sqlite_auth = _get_sqlite_auth()
+        return sqlite_auth.get_user_count()
+    except Exception as e:
+        auth_logger.error(f"Error getting user count: {e}")
+        return 0
 
 def list_users() -> list:
     """
-    Get list of all usernames.
+    List all users with their creation/update timestamps.
     
     Returns:
-        List of usernames
+        List of tuples (username, created_at, updated_at)
     """
-    users = load_users()
-    return list(users.keys())
+    try:
+        sqlite_auth = _get_sqlite_auth()
+        return sqlite_auth.list_users()
+    except Exception as e:
+        auth_logger.error(f"Error listing users: {e}")
+        return []
 
-def ensure_default_admin() -> None:
-    """
-    Ensure default admin user exists. Call this after config is loaded.
-    Creates admin/admin if no users exist.
-    """
-    users = load_users()
-    
-    if not users:
-        add_or_update_user("admin", "admin")
-        auth_logger.info("Default admin user created: admin/admin")
+# Backward compatibility - these functions are now just aliases
+def get_users_file_path():
+    """Backward compatibility - returns database path instead of YAML file path"""
+    return "users.db"
 
-def change_password(username: str, old_password: str, new_password: str) -> bool:
-    """
-    Change a user's password.
-    
-    Args:
-        username: Username
-        old_password: Current password (for verification)
-        new_password: New password
-        
-    Returns:
-        True if password changed successfully, False if old password incorrect
-    """
-    # Verify old password first
-    if not verify_user(username, old_password):
-        auth_logger.warning(f"Password change failed: {username} - Old password incorrect")
+def hash_password(password: str) -> str:
+    """Hash password using bcrypt"""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify password against hash"""
+    try:
+        return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+    except:
         return False
-    
-    # Update with new password
-    add_or_update_user(username, new_password)
-    auth_logger.info(f"Password changed successfully: {username}")
-    return True
