@@ -9,6 +9,26 @@ from utils.mission_utils import (
 )
 from utils.map_utils import get_map_style_for_pydeck, get_mapbox_api_keys, get_default_zoom
 from config import load_config
+from mission_route_manager import save_mission_route, load_mission_route, list_mission_routes, delete_mission_route
+
+def load_route_data(route_id: int):
+    """Load route data and update the mission form"""
+    try:
+        route_data = load_mission_route(route_id)
+        if route_data:
+            # Clear current nodes and load route nodes
+            st.session_state.mission_nodes_list = route_data["route_data"]["nodes"]
+            
+            # Clear form inputs
+            st.session_state.route_name = ""
+            st.session_state.route_description = ""
+            
+            st.success(f"✅ Route '{route_data['name']}' loaded successfully!")
+            st.rerun()
+        else:
+            st.error("❌ Failed to load route. Route may not exist.")
+    except Exception as e:
+        st.error(f"❌ Error loading route: {e}")
 
 @st.fragment(run_every="1s")
 def get_current_agv_options():
@@ -345,6 +365,125 @@ def render_mission_dispatch():
             if st.button("🗑️ Clear All Nodes", type="secondary"):
                 st.session_state.mission_nodes_list = []
                 st.rerun()
+    
+    # Save Route and Load Route sections
+    st.markdown("---")
+    
+    # Save Route section
+    st.markdown("**💾 Save Route**")
+    with st.container():
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            route_name = st.text_input(
+                "Route Name:",
+                key="route_name",
+                placeholder="Enter route name (e.g., Warehouse Pickup Route)"
+            )
+        
+        with col2:
+            route_description = st.text_input(
+                "Description:",
+                key="route_description", 
+                placeholder="Brief description"
+            )
+        
+        if st.button("💾 Save Route", type="primary", use_container_width=True):
+            if not route_name or not route_name.strip():
+                st.error("❌ Route name is required")
+            elif len(st.session_state.mission_nodes_list) == 0:
+                st.error("❌ Cannot save empty route. Add at least one node.")
+            else:
+                # Create route data from current nodes
+                route_data = {
+                    "nodes": st.session_state.mission_nodes_list,
+                    "edges": []  # We can add edge generation later if needed
+                }
+                
+                # Get current user (assuming admin for now)
+                current_user = st.session_state.get("user", "admin")
+                
+                if save_mission_route(route_name.strip(), route_description.strip(), route_data, current_user):
+                    st.success(f"✅ Route '{route_name}' saved successfully!")
+                    # Clear the form inputs
+                    st.session_state.route_name = ""
+                    st.session_state.route_description = ""
+                    st.rerun()
+                else:
+                    st.error(f"❌ Failed to save route '{route_name}'. Route name may already exist.")
+    
+    st.markdown("---")
+    
+    # Load Route section
+    st.markdown("**📂 Load Route**")
+    with st.container():
+        # Get current user for filtering routes
+        current_user = st.session_state.get("user", "admin")
+        
+        # Get available routes
+        available_routes = list_mission_routes(current_user)
+        
+        if available_routes:
+            # Create route options for dropdown
+            route_options = [f"{route[1]} (ID: {route[0]})" for route in available_routes]
+            route_descriptions = {route[1]: route[2] for route in available_routes}
+            route_ids = {route[1]: route[0] for route in available_routes}
+            
+            col1, col2, col3 = st.columns([3, 1, 1])
+            
+            with col1:
+                selected_route_display = st.selectbox(
+                    "Select Route:",
+                    options=route_options,
+                    key="selected_route",
+                    help="Choose a saved route to load"
+                )
+                
+                if selected_route_display:
+                    # Extract route name from display string
+                    route_name = selected_route_display.split(" (ID:")[0]
+                    if route_name in route_descriptions and route_descriptions[route_name]:
+                        st.caption(f"📝 {route_descriptions[route_name]}")
+            
+            with col2:
+                if st.button("📂 Load Route", use_container_width=True):
+                    if selected_route_display:
+                        # Extract route ID
+                        route_id = int(selected_route_display.split("ID: ")[1].rstrip(")"))
+                        
+                        # Confirmation dialog
+                        if len(st.session_state.mission_nodes_list) > 0:
+                            st.warning("⚠️ Loading a route will replace your current nodes.")
+                            col_yes, col_no = st.columns(2)
+                            with col_yes:
+                                if st.button("✅ Yes, Load Route", key="confirm_load_route"):
+                                    load_route_data(route_id)
+                            with col_no:
+                                if st.button("❌ Cancel", key="cancel_load_route"):
+                                    pass
+                        else:
+                            load_route_data(route_id)
+            
+            with col3:
+                if st.button("🗑️ Delete Route", use_container_width=True, type="secondary"):
+                    if selected_route_display:
+                        route_id = int(selected_route_display.split("ID: ")[1].rstrip(")"))
+                        route_name = selected_route_display.split(" (ID:")[0]
+                        
+                        st.warning(f"⚠️ Are you sure you want to delete route '{route_name}'?")
+                        col_yes, col_no = st.columns(2)
+                        with col_yes:
+                            if st.button("✅ Yes, Delete", key="confirm_delete_route"):
+                                if delete_mission_route(route_id, current_user):
+                                    st.success(f"✅ Route '{route_name}' deleted successfully!")
+                                    st.rerun()
+                                else:
+                                    st.error(f"❌ Failed to delete route '{route_name}'")
+                        with col_no:
+                            if st.button("❌ Cancel", key="cancel_delete_route"):
+                                pass
+        else:
+            st.info("ℹ️ No saved routes found. Save a route first to load it later.")
             
             # Mission validation
             try:
