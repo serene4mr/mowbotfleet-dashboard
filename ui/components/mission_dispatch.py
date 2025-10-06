@@ -19,9 +19,8 @@ def load_route_data(route_id: int):
             # Clear current nodes and load route nodes
             st.session_state.mission_nodes_list = route_data["route_data"]["nodes"]
             
-            # Clear form inputs
-            st.session_state.route_name = ""
-            st.session_state.route_description = ""
+            # Use flag to clear form inputs
+            st.session_state.clear_route_form = True
             
             st.success(f"✅ Route '{route_data['name']}' loaded successfully!")
             st.rerun()
@@ -369,6 +368,16 @@ def render_mission_dispatch():
     # Save Route and Load Route sections
     st.markdown("---")
     
+    # Handle form clearing flag
+    if st.session_state.get('clear_route_form', False):
+        st.session_state.clear_route_form = False
+        # Increment form counter to get new widget keys
+        st.session_state.route_form_counter = st.session_state.get('route_form_counter', 0) + 1
+    
+    # Initialize route form counter if not exists
+    if 'route_form_counter' not in st.session_state:
+        st.session_state.route_form_counter = 0
+    
     # Save Route section
     st.markdown("**💾 Save Route**")
     with st.container():
@@ -377,14 +386,14 @@ def render_mission_dispatch():
         with col1:
             route_name = st.text_input(
                 "Route Name:",
-                key="route_name",
+                key=f"route_name_{st.session_state.route_form_counter}",
                 placeholder="Enter route name (e.g., Warehouse Pickup Route)"
             )
         
         with col2:
             route_description = st.text_input(
                 "Description:",
-                key="route_description", 
+                key=f"route_description_{st.session_state.route_form_counter}", 
                 placeholder="Brief description"
             )
         
@@ -405,9 +414,8 @@ def render_mission_dispatch():
                 
                 if save_mission_route(route_name.strip(), route_description.strip(), route_data, current_user):
                     st.success(f"✅ Route '{route_name}' saved successfully!")
-                    # Clear the form inputs
-                    st.session_state.route_name = ""
-                    st.session_state.route_description = ""
+                    # Use a flag to clear form inputs on next run
+                    st.session_state.clear_route_form = True
                     st.rerun()
                 else:
                     st.error(f"❌ Failed to save route '{route_name}'. Route name may already exist.")
