@@ -190,6 +190,15 @@ def list_users() -> List[Tuple[str, str, str]]:
         auth_logger.error(f"Error listing users: {e}")
         return []
 
+def delete_user(username: str) -> bool:
+    """Delete a user from the database"""
+    try:
+        auth = _get_sqlite_auth()
+        return auth.delete_user(username)
+    except Exception as e:
+        auth_logger.error(f"Error deleting user '{username}': {e}")
+        return False
+
 def ensure_default_admin() -> None:
     """Ensure default admin user exists"""
     try:

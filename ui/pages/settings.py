@@ -4,7 +4,7 @@ import streamlit as st
 import asyncio
 from config import load_config, save_config, get_broker_url
 from mqtt_client import connect, disconnect
-from auth import add_or_update_user
+from auth import add_or_update_user, list_users, delete_user, get_user_count, ensure_default_admin
 from streamlit.runtime.scriptrunner import RerunException, RerunData
 
 def render_settings():
@@ -150,12 +150,123 @@ def render_settings():
         raise RerunException(RerunData())
 
     st.markdown("---")
+    
+    # User Management Section
     st.subheader("User Management")
-    new_user = st.text_input("New Username", key="new_user")
-    new_pass = st.text_input("New Password", type="password", key="new_pass")
-    if st.button("💾 Save Changes"):
+    st.caption("Manage system users with full CRUD operations")
+    
+    # Ensure default admin user exists
+    ensure_default_admin()
+    
+    # Display current users table
+    st.markdown("### 👥 Current Users")
+    
+    users = list_users()
+    user_count = get_user_count()
+    
+    if user_count > 0:
+        # Create user table with actions
+        for i, (username, created_at, updated_at) in enumerate(users):
+            col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 1, 1])
+            
+            with col1:
+                st.write(f"**{username}**")
+                if username == "admin":
+                    st.caption("🔑 Default admin user")
+            
+            with col2:
+                st.write(f"Created: {created_at}")
+            
+            with col3:
+                st.write(f"Updated: {updated_at}")
+            
+            with col4:
+                # Edit user button
+                if st.button("✏️", key=f"edit_{username}", help="Edit user"):
+                    st.session_state[f"editing_{username}"] = True
+            
+            with col5:
+                # Delete user button (disabled for admin)
+                if username == "admin":
+                    st.button("🔒", key=f"delete_{username}", disabled=True, help="Cannot delete admin user")
+                else:
+                    if st.button("🗑️", key=f"delete_{username}", help="Delete user"):
+                        st.session_state[f"delete_{username}"] = True
+            
+            # Edit user form (shown when edit button is clicked)
+            if st.session_state.get(f"editing_{username}", False):
+                st.markdown(f"#### ✏️ Editing User: {username}")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    new_password = st.text_input(
+                        f"New Password for {username}",
+                        type="password",
+                        key=f"new_pass_{username}",
+                        placeholder="Enter new password"
+                    )
+                
+                with col2:
+                    st.write("")  # Spacing
+                    col2_1, col2_2 = st.columns(2)
+                    with col2_1:
+                        if st.button("💾 Save", key=f"save_{username}"):
+                            if new_password:
+                                if add_or_update_user(username, new_password):
+                                    st.success(f"Password updated for {username}")
+                                    st.session_state[f"editing_{username}"] = False
+                                    st.rerun()
+                                else:
+                                    st.error(f"Failed to update password for {username}")
+                            else:
+                                st.error("Password cannot be empty")
+                    
+                    with col2_2:
+                        if st.button("❌ Cancel", key=f"cancel_{username}"):
+                            st.session_state[f"editing_{username}"] = False
+                            st.rerun()
+            
+            # Delete confirmation (shown when delete button is clicked)
+            if st.session_state.get(f"delete_{username}", False):
+                st.error(f"⚠️ Are you sure you want to delete user '{username}'?")
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("✅ Yes, Delete", key=f"confirm_delete_{username}"):
+                        if delete_user(username):
+                            st.success(f"User '{username}' deleted successfully")
+                            st.session_state[f"delete_{username}"] = False
+                            st.rerun()
+                        else:
+                            st.error(f"Failed to delete user '{username}'")
+                
+                with col2:
+                    if st.button("❌ Cancel", key=f"cancel_delete_{username}"):
+                        st.session_state[f"delete_{username}"] = False
+                        st.rerun()
+        
+        st.markdown("---")
+    
+    # Add new user section
+    st.markdown("### ➕ Add New User")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        new_user = st.text_input("Username", key="new_user", placeholder="Enter username")
+    
+    with col2:
+        new_pass = st.text_input("Password", type="password", key="new_pass", placeholder="Enter password")
+    
+    if st.button("➕ Add User", type="primary"):
         if not new_user or not new_pass:
             st.error("Username and password cannot be empty.")
+        elif new_user.strip() == "":
+            st.error("Username cannot be empty or just spaces.")
         else:
-            add_or_update_user(new_user, new_pass)
-            st.success("User credentials updated. Please logout and login again.")
+            if add_or_update_user(new_user.strip(), new_pass):
+                st.success(f"User '{new_user}' added successfully!")
+                st.rerun()
+            else:
+                st.error(f"Failed to add user '{new_user}'. User may already exist.")
+    
+    # User management info
+    st.info(f"📊 **Total Users:** {user_count} | 🔑 **Admin User:** Always available | 🛡️ **Admin Protection:** Cannot be deleted")
