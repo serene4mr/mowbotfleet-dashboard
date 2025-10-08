@@ -46,12 +46,12 @@ def send_estop_command(serial: str):
     """
     Send emergency stop command to AGV using VDA5050 instant action.
     
-    This sends a "stopVehicle" instant action with HARD blocking type,
+    This sends an "emergencyStop" instant action with HARD blocking type,
     which immediately stops the AGV and cancels the current mission.
     """
     success = send_instant_action(
         serial=serial,
-        action_type="stopVehicle",
+        action_type="emergencyStop",
         blocking_type="HARD"
     )
     return success
