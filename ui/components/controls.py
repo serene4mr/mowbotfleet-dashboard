@@ -1,7 +1,7 @@
 # ui/components/controls.py
 
 import streamlit as st
-from mqtt_client import fleet_state
+from mqtt_client import fleet_state, send_instant_action
 
 @st.fragment(run_every="1s")
 def render_quick_controls():
@@ -43,19 +43,46 @@ def render_quick_controls():
                 st.success(f"Pause sent to {selected_serial}")
 
 def send_estop_command(serial: str):
-    """Send emergency stop command to AGV"""
-    # TODO: Implement VDA5050 instant action command
-    print(f"Sending E-STOP to {serial}")
+    """
+    Send emergency stop command to AGV using VDA5050 instant action.
+    
+    This sends a "stopVehicle" instant action with HARD blocking type,
+    which immediately stops the AGV and cancels the current mission.
+    """
+    success = send_instant_action(
+        serial=serial,
+        action_type="stopVehicle",
+        blocking_type="HARD"
+    )
+    return success
 
 def send_resume_command(serial: str):
-    """Send resume command to AGV"""
-    # TODO: Implement VDA5050 resume command
-    print(f"Sending Resume to {serial}")
+    """
+    Send resume command to AGV.
+    
+    Note: This is a placeholder. VDA5050 doesn't have a standard "resume" instant action.
+    In practice, you would either:
+    1. Send a new order to continue the mission
+    2. Use a custom action if your AGV supports it
+    """
+    # TODO: Implement proper resume logic (might need to resend order)
+    print(f"⚠️ Resume command not yet implemented for {serial}")
+    print(f"   VDA5050 doesn't have a standard 'resume' instant action")
+    return False
 
 def send_pause_command(serial: str):
-    """Send pause command to AGV"""
-    # TODO: Implement VDA5050 pause command
-    print(f"Sending Pause to {serial}")
+    """
+    Send pause command to AGV.
+    
+    Note: This is a placeholder. VDA5050 doesn't have a standard "pause" instant action.
+    In practice, you would either:
+    1. Send an order update to pause the mission
+    2. Use a custom action if your AGV supports it
+    """
+    # TODO: Implement proper pause logic (might need order update)
+    print(f"⚠️ Pause command not yet implemented for {serial}")
+    print(f"   VDA5050 doesn't have a standard 'pause' instant action")
+    return False
 
 def get_agv_pause_state(agv):
     """

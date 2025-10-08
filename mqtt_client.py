@@ -6,8 +6,11 @@ from datetime import datetime, timezone
 from typing import Dict
 from vda5050.clients.master_control import MasterControlClient
 from vda5050.models.state import State
+from vda5050.models.instant_action import InstantActions
+from vda5050.models.base import Action, BlockingType
 from models import AGVInfo, ErrorInfo
 from config import load_config
+import uuid
 
 # Shared application state
 fleet_state: Dict[str, AGVInfo] = {}
@@ -194,3 +197,104 @@ def get_debug_info():
         "fleet_state_count": len(fleet_state),
         "fleet_state_keys": list(fleet_state.keys())
     }
+
+async def send_instant_action_async(serial: str, action_type: str, blocking_type: str = "HARD", action_parameters: list = None) -> bool:
+    """
+    Send an instant action to a specific AGV.
+    
+    Args:
+        serial: AGV serial number
+        action_type: Type of action (e.g., "stopVehicle", "pause", "resume")
+        blocking_type: Blocking type - "NONE", "SOFT", or "HARD" (default: "HARD")
+        action_parameters: Optional list of action parameters
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if not is_connected():
+        print(f"Cannot send instant action: Not connected to broker")
+        return False
+    
+    agv = fleet_state.get(serial)
+    if not agv:
+        print(f"Cannot send instant action: AGV {serial} not found")
+        return False
+    
+    try:
+        # Create the action
+        action = Action(
+            actionType=action_type,
+            actionId=str(uuid.uuid4()),
+            blockingType=BlockingType(blocking_type),
+            actionParameters=action_parameters
+        )
+        
+        # Create instant actions message
+        instant_actions = InstantActions(
+            headerId=1,  # This should be incremented per message in production
+            timestamp=datetime.now(timezone.utc),
+            version="2.1.0",
+            manufacturer=agv.manufacturer,
+            serialNumber=serial,
+            actions=[action]
+        )
+        
+        # Send via the client
+        success = await _client.send_instant_action(
+            target_manufacturer=agv.manufacturer,
+            target_serial=serial,
+            action=instant_actions
+        )
+        
+        if success:
+            print(f"✅ Sent instant action '{action_type}' to {serial}")
+        else:
+            print(f"❌ Failed to send instant action '{action_type}' to {serial}")
+        
+        return success
+        
+    except Exception as e:
+        print(f"❌ Error sending instant action to {serial}: {e}")
+        return False
+
+def send_instant_action(serial: str, action_type: str, blocking_type: str = "HARD", action_parameters: list = None) -> bool:
+    """
+    Synchronous wrapper to send instant action from non-async context.
+    
+    Args:
+        serial: AGV serial number
+        action_type: Type of action (e.g., "stopVehicle", "pause", "resume")
+        blocking_type: Blocking type - "NONE", "SOFT", or "HARD" (default: "HARD")
+        action_parameters: Optional list of action parameters
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if not is_connected():
+        return False
+    
+    try:
+        # Get the event loop from the connection thread
+        # We need to use the same loop that the client is using
+        if _client and hasattr(_client, '_loop'):
+            loop = _client._loop
+        else:
+            # Fallback: try to get the running loop or create new one
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+        
+        # Schedule the coroutine in the client's event loop
+        future = asyncio.run_coroutine_threadsafe(
+            send_instant_action_async(serial, action_type, blocking_type, action_parameters),
+            loop
+        )
+        
+        # Wait for result with timeout
+        return future.result(timeout=5.0)
+        
+    except Exception as e:
+        print(f"❌ Error in send_instant_action: {e}")
+        return False
