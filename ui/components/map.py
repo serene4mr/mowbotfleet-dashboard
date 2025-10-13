@@ -102,14 +102,14 @@ def render_map():
                 anchor_x = 15
                 anchor_y = 15
             
-             # Convert ENU orientation to PyDeck display angle:
-             # 1. agv.theta: ENU yaw in radians (0°=East, CCW positive)
-             # 2. * 180/π: Convert radians to degrees  
-             # 3. Negate: Flip from CCW+ (ENU) to CW+ (PyDeck convention)
-             # 4. heading_offset: Empirical correction for Web Mercator projection distortion (configurable)
-             # 5. %360: Normalize to 0-360° range for consistent display
-             # Note: This is ONLY for visual display - original agv.theta remains unchanged for robot logic
-             display_heading = ((-agv.theta * 180 / 3.14159) + heading_offset) % 360
+            # Convert ENU orientation to PyDeck display angle:
+            # 1. agv.theta: ENU yaw in radians (0°=East, CCW positive)
+            # 2. * 180/π: Convert radians to degrees  
+            # 3. Negate: Flip from CCW+ (ENU) to CW+ (PyDeck convention)
+            # 4. heading_offset: Empirical correction for Web Mercator projection distortion (configurable)
+            # 5. %360: Normalize to 0-360° range for consistent display
+            # Note: This is ONLY for visual display - original agv.theta remains unchanged for robot logic
+            display_heading = ((-agv.theta * 180 / 3.14159) + heading_offset) % 360
 
             map_data.append({
                 'serial': agv.serial,
