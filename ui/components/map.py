@@ -99,7 +99,16 @@ def render_map():
                 icon_height = 30
                 anchor_x = 15
                 anchor_y = 15
-                
+            
+            # Convert ENU orientation to PyDeck display angle:
+            # 1. agv.theta: ENU yaw in radians (0°=East, CCW positive)
+            # 2. * 180/π: Convert radians to degrees  
+            # 3. Negate: Flip from CCW+ (ENU) to CW+ (PyDeck convention)
+            # 4. -15°: Empirical correction for Web Mercator projection distortion
+            # 5. %360: Normalize to 0-360° range for consistent display
+            # Note: This is ONLY for visual display - original agv.theta remains unchanged for robot logic
+            display_heading = ((-agv.theta * 180 / 3.14159) - 30) % 360 # empirically adjusted for Web Mercator projection distortion
+
             map_data.append({
                 'serial': agv.serial,
                 'lat': lat,
@@ -109,7 +118,7 @@ def render_map():
                 'theta': agv.theta,
                 'color': color,
                 'radius': radius,
-                'heading': (-agv.theta * 180 / 3.14159) % 360,  # ENU (0°=East, CCW+) → PyDeck (0°=East, CW+), arrow points East by default
+                'heading': display_heading,
                 'icon': {
                     'url': 'data:image/svg+xml;charset=utf-8,' + create_arrow_icon(color, is_selected),
                     'width': icon_width,

@@ -595,11 +595,15 @@ def render_mission_dispatch():
                 
                 # Validate coordinates are within valid ranges
                 if -180 <= x_coord <= 180 and -90 <= y_coord <= 90:
+                    # Convert ENU orientation to PyDeck display angle (same as map.py)
+                    # Includes empirical -30° correction for Web Mercator projection distortion
+                    display_heading = ((-node['theta'] * 180 / 3.14159) - 30) % 360
+                    
                     waypoint_data.append({
                         'lon': x_coord,  # X is longitude
                         'lat': y_coord,  # Y is latitude
                         'node_id': node['nodeId'],
-                        'heading': (-node['theta'] * 180 / 3.14159) % 360,  # ENU (0°=East, CCW+) → PyDeck (0°=East, CW+), arrow points North by default
+                        'heading': display_heading,
                         'sequence': i + 1,
                         'color': [255, 0, 0]  # All waypoints red
                     })
