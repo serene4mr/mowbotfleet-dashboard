@@ -108,7 +108,7 @@ def render_map():
                 'theta': agv.theta,
                 'color': color,
                 'radius': radius,
-                'heading': agv.theta * 180 / 3.14159,  # Convert radians to degrees (NED: 0° = North)
+                'heading': -agv.theta * 180 / 3.14159,  # Negate: ENU (CCW+) → PyDeck (CW+)
                 'icon': {
                     'url': 'data:image/svg+xml;charset=utf-8,' + create_arrow_icon(color, is_selected),
                     'width': icon_width,

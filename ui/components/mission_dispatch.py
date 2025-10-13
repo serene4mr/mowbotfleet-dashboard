@@ -599,7 +599,7 @@ def render_mission_dispatch():
                         'lon': x_coord,  # X is longitude
                         'lat': y_coord,  # Y is latitude
                         'node_id': node['nodeId'],
-                        'heading': node['theta'],
+                        'heading': -node['theta'] * 180 / 3.14159,  # Negate: ENU (CCW+) → PyDeck (CW+)
                         'sequence': i + 1,
                         'color': [255, 0, 0]  # All waypoints red
                     })
