@@ -22,8 +22,8 @@ def create_arrow_icon(color, is_selected=False):
         <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
             <!-- Outer glow ring for selected AGV -->
             <circle cx="15" cy="15" r="14" fill="none" stroke="{hex_color}" stroke-width="1.5" opacity="0.6"/>
-            <!-- Main arrow -->
-            <path d="M15 3 L15 27 M9 9 L15 3 L21 9" 
+            <!-- Main arrow pointing EAST (right) -->
+            <path d="M3 15 L27 15 M21 9 L27 15 L21 21" 
                   stroke="{hex_color}" 
                   stroke-width="4" 
                   fill="none" 
@@ -36,7 +36,8 @@ def create_arrow_icon(color, is_selected=False):
         # Normal arrow for unselected AGVs
         svg = f"""
         <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 3 L15 27 M9 9 L15 3 L21 9" 
+            <!-- Main arrow pointing EAST (right) -->
+            <path d="M3 15 L27 15 M21 9 L27 15 L21 21" 
                   stroke="{hex_color}" 
                   stroke-width="4" 
                   fill="none" 
@@ -108,7 +109,7 @@ def render_map():
                 'theta': agv.theta,
                 'color': color,
                 'radius': radius,
-                'heading': (-agv.theta * 180 / 3.14159) % 360,  # ENU (0°=East, CCW+) → PyDeck (0°=East, CW+), arrow points North by default
+                'heading': (-agv.theta * 180 / 3.14159) % 360,  # ENU (0°=East, CCW+) → PyDeck (0°=East, CW+), arrow points East by default
                 'icon': {
                     'url': 'data:image/svg+xml;charset=utf-8,' + create_arrow_icon(color, is_selected),
                     'width': icon_width,
