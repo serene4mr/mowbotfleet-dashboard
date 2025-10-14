@@ -26,8 +26,11 @@ def render_quick_controls():
     
     with col1:
         if st.button("🛑 E-STOP", type="primary", width='stretch'):
-            send_estop_command(selected_serial)
-            st.success(f"E-STOP sent to {selected_serial}")
+            success = send_estop_command(selected_serial)
+            if success:
+                st.success(f"✅ E-STOP sent to {selected_serial}")
+            else:
+                st.error(f"❌ Failed to send E-STOP to {selected_serial}")
     
     with col2:
         # Single toggle button for Pause/Resume based on AGV state
@@ -49,11 +52,13 @@ def send_estop_command(serial: str):
     This sends an "emergencyStop" instant action with HARD blocking type,
     which immediately stops the AGV and cancels the current mission.
     """
+    print(f"🛑 Attempting to send E-STOP to {serial}")
     success = send_instant_action(
         serial=serial,
         action_type="emergencyStop",
         blocking_type="HARD"
     )
+    print(f"🛑 E-STOP result for {serial}: {success}")
     return success
 
 def send_resume_command(serial: str):
