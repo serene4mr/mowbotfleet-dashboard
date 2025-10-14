@@ -616,16 +616,19 @@ def render_mission_dispatch():
                     arrow_length = 0.00005  # 50% shorter arrow length
                     arrow_width = 0.0002   # Arrow width
                     
-                    # Main arrow line (shaft) - NED coordinate system (0 = North)
-                    end_x = x_coord + arrow_length * np.sin(node['theta'])  # NED: sin for East
-                    end_y = y_coord + arrow_length * np.cos(node['theta'])  # NED: cos for North
+                    # Main arrow line (shaft) - ENU coordinate system (0° = East, CCW positive)
+                    # Note: We apply heading_offset here to match the dashboard map display
+                    # Convert to radians for calculation
+                    display_theta_rad = ((-node['theta']) + heading_offset * 3.14159 / 180)
+                    end_x = x_coord + arrow_length * np.cos(display_theta_rad)  # ENU: cos for East component
+                    end_y = y_coord + arrow_length * np.sin(display_theta_rad)  # ENU: sin for North component
                     
                     # Arrow head points (two lines forming V-shape)
                     head_length = arrow_length * 0.4
-                    left_x = end_x - head_length * np.sin(node['theta'] - np.pi/6)  # NED: sin for East
-                    left_y = end_y - head_length * np.cos(node['theta'] - np.pi/6)  # NED: cos for North
-                    right_x = end_x - head_length * np.sin(node['theta'] + np.pi/6)  # NED: sin for East
-                    right_y = end_y - head_length * np.cos(node['theta'] + np.pi/6)  # NED: cos for North
+                    left_x = end_x - head_length * np.cos(display_theta_rad - np.pi/6)  # ENU: cos for East
+                    left_y = end_y - head_length * np.sin(display_theta_rad - np.pi/6)  # ENU: sin for North
+                    right_x = end_x - head_length * np.cos(display_theta_rad + np.pi/6)  # ENU: cos for East
+                    right_y = end_y - head_length * np.sin(display_theta_rad + np.pi/6)  # ENU: sin for North
                     
                     # Add main arrow shaft
                     arrow_data.append({
