@@ -496,19 +496,33 @@ def render_mission_dispatch():
                     if selected_route_display:
                         route_id = int(selected_route_display.split("ID: ")[1].rstrip(")"))
                         route_name = selected_route_display.split(" (ID:")[0]
-                        
-                        st.warning(f"⚠️ Are you sure you want to delete route '{route_name}'?")
-                        col_yes, col_no = st.columns(2)
-                        with col_yes:
-                            if st.button("✅ Yes, Delete", key="confirm_delete_route"):
-                                if delete_mission_route(route_id, current_user):
-                                    st.success(f"✅ Route '{route_name}' deleted successfully!")
-                                    st.rerun()
-                                else:
-                                    st.error(f"❌ Failed to delete route '{route_name}'")
-                        with col_no:
-                            if st.button("❌ Cancel", key="cancel_delete_route"):
-                                pass
+                        # Store delete request in session state
+                        st.session_state.show_delete_confirmation = True
+                        st.session_state.delete_route_id = route_id
+                        st.session_state.delete_route_name = route_name
+                        st.rerun()
+        
+        # Show delete confirmation dialog if flagged
+        if st.session_state.get('show_delete_confirmation', False):
+            route_name = st.session_state.get('delete_route_name', '')
+            route_id = st.session_state.get('delete_route_id', 0)
+            
+            st.warning(f"⚠️ Are you sure you want to delete route '{route_name}'?")
+            col_yes, col_no = st.columns(2)
+            with col_yes:
+                if st.button("✅ Yes, Delete", key="confirm_delete_route"):
+                    if delete_mission_route(route_id, current_user):
+                        st.success(f"✅ Route '{route_name}' deleted successfully!")
+                        # Clear confirmation state
+                        st.session_state.show_delete_confirmation = False
+                        st.rerun()
+                    else:
+                        st.error(f"❌ Failed to delete route '{route_name}'")
+                        st.session_state.show_delete_confirmation = False
+            with col_no:
+                if st.button("❌ Cancel", key="cancel_delete_route"):
+                    st.session_state.show_delete_confirmation = False
+                    st.rerun()
         else:
             st.info("ℹ️ No saved routes found. Save a route first to load it later.")
     
