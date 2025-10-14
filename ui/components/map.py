@@ -66,7 +66,7 @@ def render_map():
     ui_config = config.get("ui", {})
     dashboard_config = config.get("dashboard", {})
     map_config = config.get("general", {}).get("map", {})
-    heading_offset = map_config.get("heading_offset_degrees", -30)  # Default -30° if not configured
+    heading_offset = map_config.get("heading_offset_degrees", -30)  # Default -30° if not configured 
 
     # Prepare data for PyDeck
     map_data = []
