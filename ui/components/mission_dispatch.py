@@ -126,6 +126,8 @@ def render_mission_dispatch():
     # Load configuration for mission settings
     config = load_config()
     mission_config = config.get("mission", {})
+    map_config = config.get("general", {}).get("map", {})
+    heading_offset = map_config.get("heading_offset_degrees", -30)  # Default -30° if not configured
     
     # Target AGV selection with enhanced display (auto-refresh every 1s)
     st.markdown("**🎯 Target AGV Selection**")
@@ -595,11 +597,15 @@ def render_mission_dispatch():
                 
                 # Validate coordinates are within valid ranges
                 if -180 <= x_coord <= 180 and -90 <= y_coord <= 90:
+                    # Convert ENU orientation to PyDeck display angle (same as map.py)
+                    # Includes empirical correction for Web Mercator projection distortion (configurable)
+                    display_heading = ((-node['theta'] * 180 / 3.14159) + heading_offset) % 360
+                    
                     waypoint_data.append({
                         'lon': x_coord,  # X is longitude
                         'lat': y_coord,  # Y is latitude
                         'node_id': node['nodeId'],
-                        'heading': node['theta'],
+                        'heading': display_heading,
                         'sequence': i + 1,
                         'color': [255, 0, 0]  # All waypoints red
                     })

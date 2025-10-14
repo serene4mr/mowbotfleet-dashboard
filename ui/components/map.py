@@ -22,8 +22,8 @@ def create_arrow_icon(color, is_selected=False):
         <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
             <!-- Outer glow ring for selected AGV -->
             <circle cx="15" cy="15" r="14" fill="none" stroke="{hex_color}" stroke-width="1.5" opacity="0.6"/>
-            <!-- Main arrow -->
-            <path d="M15 3 L15 27 M9 9 L15 3 L21 9" 
+            <!-- Main arrow pointing EAST (right) -->
+            <path d="M3 15 L27 15 M21 9 L27 15 L21 21" 
                   stroke="{hex_color}" 
                   stroke-width="4" 
                   fill="none" 
@@ -36,7 +36,8 @@ def create_arrow_icon(color, is_selected=False):
         # Normal arrow for unselected AGVs
         svg = f"""
         <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 3 L15 27 M9 9 L15 3 L21 9" 
+            <!-- Main arrow pointing EAST (right) -->
+            <path d="M3 15 L27 15 M21 9 L27 15 L21 21" 
                   stroke="{hex_color}" 
                   stroke-width="4" 
                   fill="none" 
@@ -64,6 +65,8 @@ def render_map():
     config = load_config()
     ui_config = config.get("ui", {})
     dashboard_config = config.get("dashboard", {})
+    map_config = config.get("general", {}).get("map", {})
+    heading_offset = map_config.get("heading_offset_degrees", -30)  # Default -30° if not configured
 
     # Prepare data for PyDeck
     map_data = []
@@ -98,7 +101,16 @@ def render_map():
                 icon_height = 30
                 anchor_x = 15
                 anchor_y = 15
-                
+            
+            # Convert ENU orientation to PyDeck display angle:
+            # 1. agv.theta: ENU yaw in radians (0°=East, CCW positive)
+            # 2. * 180/π: Convert radians to degrees  
+            # 3. Negate: Flip from CCW+ (ENU) to CW+ (PyDeck convention)
+            # 4. heading_offset: Empirical correction for Web Mercator projection distortion (configurable)
+            # 5. %360: Normalize to 0-360° range for consistent display
+            # Note: This is ONLY for visual display - original agv.theta remains unchanged for robot logic
+            display_heading = ((-agv.theta * 180 / 3.14159) + heading_offset) % 360
+
             map_data.append({
                 'serial': agv.serial,
                 'lat': lat,
@@ -108,7 +120,7 @@ def render_map():
                 'theta': agv.theta,
                 'color': color,
                 'radius': radius,
-                'heading': agv.theta * 180 / 3.14159,  # Convert radians to degrees (NED: 0° = North)
+                'heading': display_heading,
                 'icon': {
                     'url': 'data:image/svg+xml;charset=utf-8,' + create_arrow_icon(color, is_selected),
                     'width': icon_width,

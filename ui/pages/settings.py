@@ -70,6 +70,18 @@ def render_settings():
     # Add zoom level reference
     st.caption("📏 **Zoom Reference:** 1=World • 5=Country • 10=City • 15=Street • 20=Building (Max)")
     
+    # Heading offset for orientation display
+    heading_offset = st.number_input(
+        "Heading Offset (degrees)",
+        min_value=-180,
+        max_value=180,
+        value=cfg["general"].get("map", {}).get("heading_offset_degrees", -30),
+        step=1,
+        help="Empirical correction for AGV arrow orientation on map (adjust if arrows don't point correctly)",
+        key="heading_offset_input"
+    )
+    st.caption("🧭 **Tip:** Adjust this if AGV arrows don't point in the correct direction on the map")
+    
     # Show Mapbox API key field only if satellite is selected
     mapbox_api_key = ""
     if map_style == "mapbox_satellite":
@@ -100,6 +112,7 @@ def render_settings():
         new_cfg["general"]["map"]["style"] = map_style
         new_cfg["general"]["map"]["mapbox_api_key"] = mapbox_api_key
         new_cfg["general"]["map"]["default_zoom"] = default_zoom
+        new_cfg["general"]["map"]["heading_offset_degrees"] = heading_offset
         
         # Save only the map settings
         map_config = {
@@ -109,7 +122,7 @@ def render_settings():
         }
         save_config(map_config)
         
-        st.success("Map settings saved.")
+        st.success("✅ Map settings saved! Changes will apply on next page refresh.")
         st.info("🗺️ Maps will use the new configuration immediately.")
 
     st.markdown("---")

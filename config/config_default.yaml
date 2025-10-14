@@ -41,6 +41,7 @@ general:
     style: "default"             # Map style: "default" or "mapbox_satellite"
     mapbox_api_key: ""           # Mapbox API key (required for satellite imagery)
     default_zoom: 15             # Default zoom level for all maps (1-20)
+    heading_offset_degrees: -30  # Empirical correction for Web Mercator projection (degrees)
 
 # Dashboard UI Configuration  
 dashboard:
