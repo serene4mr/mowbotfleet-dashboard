@@ -77,8 +77,8 @@ def render_agv_details():
             
             sensor_displays.append(f"{icon} {sensor_name}: {status}")
         
-        # Display all sensors on one line
-        st.write(" ".join(sensor_displays))
+        # Display all sensors on one line with separator
+        st.write(" | ".join(sensor_displays))
     
     # Errors Section
     if agv.errors:
