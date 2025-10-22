@@ -21,29 +21,13 @@ def render_quick_controls():
 
     st.markdown(f"**Quick Controls for {selected_serial}**")
     
-    # Create button layout
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        if st.button("🛑 E-STOP", type="primary", width='stretch'):
-            success = send_estop_command(selected_serial)
-            if success:
-                st.success(f"✅ E-STOP sent to {selected_serial}")
-            else:
-                st.error(f"❌ Failed to send E-STOP to {selected_serial}")
-    
-    with col2:
-        # Single toggle button for Pause/Resume based on AGV state
-        is_paused = get_agv_pause_state(agv)
-        
-        if is_paused:
-            if st.button("▶️ Resume Mission", type="primary", width='stretch'):
-                send_resume_command(selected_serial)
-                st.success(f"Resume sent to {selected_serial}")
+    # E-STOP button
+    if st.button("🛑 E-STOP", type="primary", use_container_width=True):
+        success = send_estop_command(selected_serial)
+        if success:
+            st.success(f"✅ E-STOP sent to {selected_serial}")
         else:
-            if st.button("⏸️ Pause Mission", width='stretch'):
-                send_pause_command(selected_serial)
-                st.success(f"Pause sent to {selected_serial}")
+            st.error(f"❌ Failed to send E-STOP to {selected_serial}")
 
 def send_estop_command(serial: str):
     """
@@ -61,45 +45,3 @@ def send_estop_command(serial: str):
     print(f"🛑 E-STOP result for {serial}: {success}")
     return success
 
-def send_resume_command(serial: str):
-    """
-    Send resume command to AGV.
-    
-    Note: This is a placeholder. VDA5050 doesn't have a standard "resume" instant action.
-    In practice, you would either:
-    1. Send a new order to continue the mission
-    2. Use a custom action if your AGV supports it
-    """
-    # TODO: Implement proper resume logic (might need to resend order)
-    print(f"⚠️ Resume command not yet implemented for {serial}")
-    print(f"   VDA5050 doesn't have a standard 'resume' instant action")
-    return False
-
-def send_pause_command(serial: str):
-    """
-    Send pause command to AGV.
-    
-    Note: This is a placeholder. VDA5050 doesn't have a standard "pause" instant action.
-    In practice, you would either:
-    1. Send an order update to pause the mission
-    2. Use a custom action if your AGV supports it
-    """
-    # TODO: Implement proper pause logic (might need order update)
-    print(f"⚠️ Pause command not yet implemented for {serial}")
-    print(f"   VDA5050 doesn't have a standard 'pause' instant action")
-    return False
-
-def get_agv_pause_state(agv):
-    """
-    Determine if AGV is currently paused based on its state.
-    This is a placeholder implementation - in real scenario, 
-    this would check the AGV's actual pause state from VDA5050 data.
-    """
-    # For now, we'll use a simple heuristic based on operating mode
-    # In real implementation, this should check the AGV's pause state from VDA5050
-    if hasattr(agv, 'operating_mode'):
-        # If AGV is in PAUSED mode, it's paused
-        return agv.operating_mode.upper() == 'PAUSED'
-    
-    # Default to not paused if we can't determine state
-    return False
