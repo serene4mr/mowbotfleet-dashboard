@@ -19,6 +19,27 @@ _connection_task = None
 _connection_lock = threading.Lock()
 _event_loop = None  # Store the event loop for sending commands
 
+def _parse_sensor_status(info_description: str) -> Dict[str, str]:
+    """
+    Parse sensor status from SENSOR_DIAG infoDescription.
+    
+    Example input: "IMU:OK,Laser:OK,NTRIP:ERROR,GNSS:OK"
+    Returns: {"IMU": "OK", "Laser": "OK", "NTRIP": "ERROR", "GNSS": "OK"}
+    """
+    sensor_status = {}
+    if not info_description:
+        return sensor_status
+    
+    # Split by comma to get individual sensor:status pairs
+    pairs = info_description.split(',')
+    for pair in pairs:
+        pair = pair.strip()
+        if ':' in pair:
+            sensor, status = pair.split(':', 1)
+            sensor_status[sensor.strip()] = status.strip()
+    
+    return sensor_status
+
 def _update_agv(serial: str, state: State):
     """Update fleet_state with AGV information from VDA5050 State"""
     info = fleet_state.get(serial)
@@ -53,6 +74,14 @@ def _update_agv(serial: str, state: State):
         ErrorInfo(datetime.now(timezone.utc), e.errorType, e.errorDescription, e.errorLevel.value)
         for e in (getattr(state, 'errors', []) or [])
     ]
+    
+    # Parse sensor diagnostics from information field
+    info.sensor_status = None  # Reset to None if no SENSOR_DIAG found
+    if state.information:
+        for info_item in state.information:
+            if info_item.infoType == "SENSOR_DIAG" and info_item.infoDescription:
+                info.sensor_status = _parse_sensor_status(info_item.infoDescription)
+                break  # Use the first SENSOR_DIAG found
 
 def on_state_update(serial: str, state: State):
     """Callback for VDA5050 state updates"""

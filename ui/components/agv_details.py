@@ -56,6 +56,48 @@ def render_agv_details():
     else:
         st.write("No active mission")
 
+    # Sensor Diagnostics Section
+    if agv.sensor_status:
+        st.markdown("**Sensor Diagnostics**")
+        
+        # Group sensors by status for better visualization
+        ok_sensors = []
+        warn_sensors = []
+        error_sensors = []
+        
+        for sensor_name, status in agv.sensor_status.items():
+            status_upper = status.upper()
+            if status_upper == "OK":
+                ok_sensors.append(sensor_name)
+            elif status_upper == "WARN" or status_upper == "WARNING":
+                warn_sensors.append(sensor_name)
+            elif status_upper == "ERROR":
+                error_sensors.append(sensor_name)
+            else:
+                # Unknown status, treat as warning
+                warn_sensors.append(f"{sensor_name} ({status})")
+        
+        # Display sensors by status
+        cols = st.columns(3)
+        
+        with cols[0]:
+            if ok_sensors:
+                st.markdown("**🟢 OK**")
+                for sensor in ok_sensors:
+                    st.write(f"✅ {sensor}")
+        
+        with cols[1]:
+            if warn_sensors:
+                st.markdown("**🟡 WARN**")
+                for sensor in warn_sensors:
+                    st.write(f"⚠️ {sensor}")
+        
+        with cols[2]:
+            if error_sensors:
+                st.markdown("**🔴 ERROR**")
+                for sensor in error_sensors:
+                    st.write(f"❌ {sensor}")
+    
     # Errors Section
     if agv.errors:
         st.markdown("**Active Errors**")

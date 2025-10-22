@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 import time
 
 @dataclass
@@ -23,3 +23,4 @@ class AGVInfo:
     connect_timestamp: float = field(default_factory=time.time)
     current_order: Optional[str] = None
     errors: List[ErrorInfo] = field(default_factory=list)
+    sensor_status: Optional[Dict[str, str]] = None  # e.g., {"IMU": "OK", "Laser": "WARN", ...}
