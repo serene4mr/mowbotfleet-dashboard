@@ -60,7 +60,8 @@ def render_agv_details():
     if agv.sensor_status:
         st.markdown("**Sensor Diagnostics**")
         
-        # Display each sensor with its status on a single line
+        # Build horizontal display string
+        sensor_displays = []
         for sensor_name, status in agv.sensor_status.items():
             status_upper = status.upper()
             
@@ -74,7 +75,10 @@ def render_agv_details():
             else:
                 icon = "ℹ️"
             
-            st.write(f"{icon} **{sensor_name}**: `{status}`")
+            sensor_displays.append(f"{icon} {sensor_name}: {status}")
+        
+        # Display all sensors on one line
+        st.write(" ".join(sensor_displays))
     
     # Errors Section
     if agv.errors:
