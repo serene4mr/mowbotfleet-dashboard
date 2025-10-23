@@ -173,36 +173,6 @@ def render_settings():
         # Rerun to update header
         raise RerunException(RerunData())
 
-    # Debug Section (for development)
-    with st.expander("🔧 Debug Information"):
-        st.caption("Development tools for broker configuration management")
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            if st.button("📋 Show Config Status"):
-                metadata = broker_config_manager.get_config_metadata()
-                if metadata.get("exists"):
-                    st.success(f"✅ Config exists")
-                    st.write(f"Created: {metadata.get('created_at')}")
-                    st.write(f"Updated: {metadata.get('updated_at')}")
-                else:
-                    st.warning("⚠️ No secure config found")
-        
-        with col2:
-            if st.button("📊 List All Configs"):
-                configs = broker_config_manager.list_all_configs()
-                if configs:
-                    for key, info in configs.items():
-                        st.write(f"**{key}**: {info['updated_at']}")
-                else:
-                    st.info("No configurations found")
-        
-        with col3:
-            if st.button("📊 Show Broker Info"):
-                broker_info = broker_config_manager.get_broker_config()
-                st.json(broker_info)
-
     st.markdown("---")
     
     # User Management Section
