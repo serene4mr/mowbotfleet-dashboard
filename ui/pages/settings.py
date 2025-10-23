@@ -141,15 +141,7 @@ def render_settings():
     buser = st.text_input("Broker Username", value=broker_config["user"])
     bpass = st.text_input("Broker Password", type="password", value=broker_config["password"])
 
-    col1, col2 = st.columns([3, 1])
-    
-    with col1:
-        save_button = st.button("💾 Save & Reconnect", use_container_width=True)
-    
-    with col2:
-        delete_button = st.button("🗑️ Delete Config", use_container_width=True, type="secondary")
-    
-    if save_button:
+    if st.button("💾 Save & Reconnect", use_container_width=True):
         # Update broker configuration securely
         new_broker_config = {
             "host": host,
@@ -179,17 +171,6 @@ def render_settings():
             # Continue anyway to save the config
 
         # Rerun to update header
-        raise RerunException(RerunData())
-    
-    if delete_button:
-        # Delete broker configuration
-        if broker_config_manager.delete_broker_config():
-            st.success("🗑️ Broker configuration deleted!")
-            st.info("ℹ️ Will fallback to YAML configuration on next restart")
-        else:
-            st.error("❌ Failed to delete broker configuration")
-        
-        # Rerun to update form
         raise RerunException(RerunData())
 
     # Debug Section (for development)
