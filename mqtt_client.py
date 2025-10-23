@@ -159,6 +159,14 @@ def _connect_in_thread(broker_url: str, username: str, password: str, client_id:
                 validate_messages=True  # Enable validation now that schema files are included
             )
             
+            # Configure TLS if using secure connection
+            if broker_url.startswith('mqtts://'):
+                print(f"🔒 Configuring TLS for secure connection...")
+                # Access the underlying paho-mqtt client and configure TLS
+                mqtt_client = _client.mqtt._client
+                mqtt_client.tls_set()  # Use default TLS settings
+                mqtt_client.tls_insecure_set(False)  # Verify server certificate
+            
             # Register callbacks using the correct API
             _client.on_state_update(on_state_update)
             _client.on_connection_change(lambda serial, state: on_connected() if state == "ONLINE" else on_disconnected())
