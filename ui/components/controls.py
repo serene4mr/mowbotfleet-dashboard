@@ -2,6 +2,7 @@
 
 import streamlit as st
 from mqtt_client import fleet_state, send_instant_action
+from i18n_manager import t
 
 @st.fragment(run_every="1s")
 def render_quick_controls():
@@ -11,23 +12,23 @@ def render_quick_controls():
     selected_serial = st.session_state.get('selected_agv')
     
     if not selected_serial:
-        st.write("Select an AGV to enable controls.")
+        st.write(t("agv.select_agv"))
         return
     
     agv = fleet_state.get(selected_serial)
     if not agv:
-        st.write("Selected AGV not available.")
+        st.write(t("agv.agv_not_available"))
         return
 
-    st.markdown(f"**Quick Controls for {selected_serial}**")
+    st.markdown(f"**{t('agv.controls')} for {selected_serial}**")
     
     # E-STOP button
-    if st.button("🛑 E-STOP", type="primary", use_container_width=True):
+    if st.button(t("agv.estop"), type="primary", use_container_width=True):
         success = send_estop_command(selected_serial)
         if success:
-            st.success(f"✅ E-STOP sent to {selected_serial}")
+            st.success(t("agv.estop_success", serial=selected_serial))
         else:
-            st.error(f"❌ Failed to send E-STOP to {selected_serial}")
+            st.error(t("agv.estop_error", serial=selected_serial))
 
 def send_estop_command(serial: str):
     """

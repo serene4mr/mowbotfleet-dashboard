@@ -20,21 +20,21 @@ def render_fleet_table():
     sorted_agvs = sorted(current_fleet_state.values(), key=lambda x: x.connect_timestamp)
     
     # Always show the header
-    st.markdown("**Select AGV:**")
+    st.markdown(f"**{t('dashboard.agv_selection')}:**")
     
     if sorted_agvs:
         # Show table header (compact)
         col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
         with col1:
-            st.markdown("**Serial (Manufacturer)**")
+            st.markdown(f"**{t('dashboard.serial_number')} ({t('dashboard.manufacturer')})**")
         with col2:
-            st.markdown("**Battery**")
+            st.markdown(f"**{t('dashboard.battery')}**")
         with col3:
-            st.markdown("**Mode**")
+            st.markdown(f"**{t('dashboard.operating_mode')}**")
         with col4:
-            st.markdown("**Alerts**")
+            st.markdown(f"**{t('dashboard.alerts')}**")
         with col5:
-            st.markdown("**Last Update**")
+            st.markdown(f"**{t('dashboard.last_update')}**")
         # Initialize selected AGV if not set
         if 'selected_agv' not in st.session_state:
             st.session_state['selected_agv'] = sorted_agvs[0].serial
@@ -118,7 +118,7 @@ def render_fleet_table():
             """)
 
 def render_header():
-    st.markdown("### Dashboard")
+    st.markdown(f"### {t('dashboard.title')}")
     
     # Auto-updating status section (fragment)
     render_header_status()
@@ -135,22 +135,22 @@ def render_header_status():
         if broker_info["status"] == "Connected":
             status_icon = "🟢"
             tls_indicator = "🔒" if broker_info["tls"] else "🔓"
-            st.write(f"**Broker:** {status_icon} {broker_info['host']}:{broker_info['port']} {tls_indicator}")
+            st.write(f"**{t('dashboard.broker_status')}:** {status_icon} {broker_info['host']}:{broker_info['port']} {tls_indicator}")
             st.caption(f"User: {broker_info['username']}")
         else:
-            st.write(f"**Broker:** 🔴 Disconnected")
+            st.write(f"**{t('dashboard.broker_status')}:** 🔴 {t('dashboard.disconnected')}")
     
     with col2:
         online_count = len(fleet_state)
-        st.write(f"**Fleet:** {online_count} Online")
+        st.write(f"**{t('dashboard.fleet_status')}:** {online_count} {t('dashboard.online')}")
     
     with col3:
         error_count = sum(len(agv.errors) for agv in fleet_state.values())
-        st.write(f"**Alerts:** {error_count}")
+        st.write(f"**{t('dashboard.alerts')}:** {error_count}")
 
 def render_row1():
     """Fleet Overview & Map"""
-    st.subheader("Fleet Overview & Map")
+    st.subheader(f"{t('dashboard.fleet_overview')} & {t('dashboard.mission_map')}")
     col1, col2 = st.columns(2)
     
     with col1:
@@ -162,7 +162,7 @@ def render_row1():
 
 def render_row2():
     """AGV Details & Quick Controls"""
-    st.subheader("AGV Details & Quick Controls")
+    st.subheader(f"{t('dashboard.agv_details')} & {t('dashboard.quick_controls')}")
     col1, col2 = st.columns([3, 1])
     
     with col1:
