@@ -199,11 +199,9 @@ def render_settings():
                     st.info("No configurations found")
         
         with col3:
-            if st.button("🔄 Reset to Defaults"):
-                if broker_config_manager.delete_broker_config():
-                    st.success("✅ Reset to defaults")
-                else:
-                    st.error("❌ Failed to reset")
+            if st.button("📊 Show Broker Info"):
+                broker_info = broker_config_manager.get_broker_config()
+                st.json(broker_info)
 
     st.markdown("---")
     
