@@ -10,7 +10,6 @@ from ui.login import render_login
 from ui.layout import render_sidebar, render_dashboard, render_missions_page
 from ui.pages.settings import render_settings
 from i18n_manager import t
-from streamlit_cloud_optimization import handle_cloud_limitations
 
 # Configure Streamlit page
 st.set_page_config(
@@ -32,18 +31,6 @@ ensure_default_admin()
 if "user" not in st.session_state:
     render_login()
     st.stop()
-
-# Handle Streamlit Community Cloud limitations (only on cloud)
-if not handle_cloud_limitations():
-    st.stop()
-
-# Debug mode for local development
-if st.sidebar.checkbox("🐛 Debug Mode", help="Show debug information for local development"):
-    st.sidebar.write("**Debug Info:**")
-    st.sidebar.write(f"Connected: {is_connected()}")
-    st.sidebar.write(f"Session State Keys: {list(st.session_state.keys())}")
-    if st.sidebar.button("🔄 Force Refresh"):
-        st.rerun()
 
 page = render_sidebar()
 
