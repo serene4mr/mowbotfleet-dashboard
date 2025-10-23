@@ -136,13 +136,11 @@ class BrokerConfigManager:
     def _get_default_broker_config(self) -> Dict[str, Any]:
         """Get default broker configuration"""
         return {
-            "host": "127.0.0.1",
+            "host": "localhost",
             "port": 1883,
             "use_tls": False,
             "user": "",
-            "password": "",
-            "keepalive": 60,
-            "client_id_prefix": "MowbotFleet"
+            "password": ""
         }
     
     def get_broker_credentials(self) -> Tuple[str, str]:

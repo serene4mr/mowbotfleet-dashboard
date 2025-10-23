@@ -156,9 +156,7 @@ def render_settings():
             "port": port,
             "use_tls": use_tls,
             "user": buser,
-            "password": bpass,
-            "keepalive": broker_config.get("keepalive", 60),
-            "client_id_prefix": broker_config.get("client_id_prefix", "MowbotFleet")
+            "password": bpass
         }
         
         # Save securely to encrypted database
