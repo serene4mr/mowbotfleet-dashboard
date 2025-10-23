@@ -111,14 +111,17 @@ def get_broker_url(config: Dict[str, Any]) -> str:
         config: Configuration dictionary
         
     Returns:
-        Complete MQTT broker URL (host:port format for VDA5050 client)
+        Complete MQTT broker URL with protocol
     """
     broker_config = config.get("broker", {})
     host = broker_config.get("host", "127.0.0.1")
     port = broker_config.get("port", 1883)
+    use_tls = broker_config.get("use_tls", False)
     
-    # For VDA5050 client, return host:port format
-    return f"{host}:{port}"
+    # Choose protocol based on TLS setting
+    protocol = "mqtts" if use_tls else "mqtt"
+    
+    return f"{protocol}://{host}:{port}"
 
 def get_broker_credentials(config: Dict[str, Any]) -> tuple:
     """

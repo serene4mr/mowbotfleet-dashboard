@@ -118,6 +118,8 @@ def _connect_in_thread(broker_url: str, username: str, password: str, client_id:
             _event_loop = loop  # Store the loop reference
             
             # Parse broker URL to extract host and port
+            print(f"🔗 Attempting to connect to: {broker_url}")
+            
             if '://' in broker_url:
                 # Remove protocol prefix (mqtt://, mqtts://, etc.)
                 broker_url_clean = broker_url.split('://', 1)[1]
@@ -128,11 +130,12 @@ def _connect_in_thread(broker_url: str, username: str, password: str, client_id:
                 broker_host, broker_port = broker_url_clean.split(':', 1)
                 try:
                     broker_port = int(broker_port)
+                    print(f"🔗 Parsed broker: {broker_host}:{broker_port}")
                 except ValueError:
-                    # Invalid port number
+                    print(f"❌ Invalid port number: {broker_port}")
                     return
             else:
-                # Invalid broker URL format
+                print(f"❌ Invalid broker URL format: {broker_url}")
                 return
             
             # Load config for general client settings
@@ -140,6 +143,12 @@ def _connect_in_thread(broker_url: str, username: str, password: str, client_id:
             general_config = config.get("general", {})
             
             # Initialize MasterControlClient with required parameters
+            print(f"🔗 Creating MasterControlClient with:")
+            print(f"   Host: {broker_host}")
+            print(f"   Port: {broker_port}")
+            print(f"   Username: {username}")
+            print(f"   Password: {'***' if password else 'None'}")
+            
             _client = MasterControlClient(
                 broker_url=broker_host,
                 manufacturer=general_config.get("manufacturer", "MowbotAI"),
@@ -154,11 +163,12 @@ def _connect_in_thread(broker_url: str, username: str, password: str, client_id:
             _client.on_state_update(on_state_update)
             _client.on_connection_change(lambda serial, state: on_connected() if state == "ONLINE" else on_disconnected())
             
-            
+            print(f"🔗 Attempting connection...")
             # Connect to broker
             success = loop.run_until_complete(_client.connect())
             
             if success:
+                print(f"✅ Connected successfully to {broker_host}:{broker_port}")
                 on_connected()  # Use thread-safe function
                 # Keep the event loop running
                 try:
@@ -168,10 +178,14 @@ def _connect_in_thread(broker_url: str, username: str, password: str, client_id:
                 finally:
                     loop.close()
             else:
+                print(f"❌ Failed to connect to {broker_host}:{broker_port}")
                 loop.close()
                 
         except Exception as e:
             # Connection error - will be handled by the caller
+            print(f"❌ Connection error: {e}")
+            import traceback
+            traceback.print_exc()
             loop.close()
     
     # Start connection in a separate thread
