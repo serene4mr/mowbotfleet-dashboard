@@ -300,7 +300,7 @@ def render_mission_dispatch():
             agv = fleet_state[target_agv_serial]
             col1, col2 = st.columns([1, 4])
             with col1:
-                if st.button("📍 Use AGV Pos", help="Fill coordinates with selected AGV's current position", use_container_width=True, key="use_agv_pos_btn"):
+                if st.button(t("missions.use_agv_pos"), help="Fill coordinates with selected AGV's current position", use_container_width=True, key="use_agv_pos_btn"):
                     # Increment form counter for new widget keys
                     st.session_state.form_counter += 1
                     # Store AGV position for the new form
@@ -315,56 +315,56 @@ def render_mission_dispatch():
         
         # Display current nodes table
         if st.session_state.mission_nodes_list:
-            st.markdown(f"**📋 Current Mission Nodes ({len(st.session_state.mission_nodes_list)}/{max_nodes})**")
+            st.markdown(f"**{t('missions.current_mission_nodes')} ({len(st.session_state.mission_nodes_list)}/{max_nodes})**")
             
             # Create table data
             table_data = []
             for i, node in enumerate(st.session_state.mission_nodes_list):
                 table_data.append({
-                    "Order": i + 1,
-                    "Node ID": node['nodeId'],
-                    "X": f"{node['x']:.6f}",
-                    "Y": f"{node['y']:.6f}",
-                    "Heading": f"{node['theta']:.6f}",
-                    "Actions": f"Delete"
+                    t("missions.order"): i + 1,
+                    t("missions.node_id_header"): node['nodeId'],
+                    t("missions.x_lon"): f"{node['x']:.6f}",
+                    t("missions.y_lat"): f"{node['y']:.6f}",
+                    t("missions.heading_header"): f"{node['theta']:.6f}",
+                    t("missions.actions"): f"Delete"
                 })
             
             # Display table headers
             col1, col2, col3, col4, col5, col6 = st.columns([1, 2, 1, 1, 1, 1])
             with col1:
-                st.write("**Order**")
+                st.write(f"**{t('missions.order')}**")
             with col2:
-                st.write("**Node ID**")
+                st.write(f"**{t('missions.node_id_header')}**")
             with col3:
-                st.write("**X (Lon)**")
+                st.write(f"**{t('missions.x_lon')}**")
             with col4:
-                st.write("**Y (Lat)**")
+                st.write(f"**{t('missions.y_lat')}**")
             with col5:
-                st.write("**Heading**")
+                st.write(f"**{t('missions.heading_header')}**")
             with col6:
-                st.write("**Actions**")
+                st.write(f"**{t('missions.actions')}**")
             
             # Display table with delete buttons
             for i, row in enumerate(table_data):
                 col1, col2, col3, col4, col5, col6 = st.columns([1, 2, 1, 1, 1, 1])
                 
                 with col1:
-                    st.write(f"**{row['Order']}**")
+                    st.write(f"**{row[t('missions.order')]}**")
                 with col2:
-                    st.write(f"**{row['Node ID']}**")
+                    st.write(f"**{row[t('missions.node_id_header')]}**")
                 with col3:
-                    st.write(row['X'])
+                    st.write(row[t('missions.x_lon')])
                 with col4:
-                    st.write(row['Y'])
+                    st.write(row[t('missions.y_lat')])
                 with col5:
-                    st.write(row['Heading'])
+                    st.write(row[t('missions.heading_header')])
                 with col6:
                     if st.button("🗑️", key=f"delete_node_{i}", help="Delete this node"):
                         st.session_state.mission_nodes_list.pop(i)
                         st.rerun()
             
             # Clear all nodes button
-            if st.button("🗑️ Clear All Nodes", type="secondary"):
+            if st.button(t("missions.clear_all_nodes"), type="secondary"):
                 st.session_state.mission_nodes_list = []
                 st.rerun()
     
@@ -382,29 +382,29 @@ def render_mission_dispatch():
         st.session_state.route_form_counter = 0
     
     # Save Route section
-    st.markdown("**💾 Save Route**")
+    st.markdown(f"**{t('missions.save_route_section')}**")
     with st.container():
         col1, col2 = st.columns([2, 1])
         
         with col1:
             route_name = st.text_input(
-                "Route Name:",
+                t("missions.route_name"),
                 key=f"route_name_{st.session_state.route_form_counter}",
                 placeholder="Enter route name (e.g., Warehouse Pickup Route)"
             )
         
         with col2:
             route_description = st.text_input(
-                "Description:",
+                t("missions.route_description"),
                 key=f"route_description_{st.session_state.route_form_counter}", 
                 placeholder="Brief description"
             )
         
-        if st.button("💾 Save Route", type="primary", use_container_width=True):
+        if st.button(t("missions.save_route"), type="primary", use_container_width=True):
             if not route_name or not route_name.strip():
-                st.error("❌ Route name is required")
+                st.error(t("missions.error_messages.route_name_required"))
             elif len(st.session_state.mission_nodes_list) == 0:
-                st.error("❌ Cannot save empty route. Add at least one node.")
+                st.error(t("missions.error_messages.no_nodes"))
             else:
                 # Create route data from current nodes
                 route_data = {
@@ -416,17 +416,17 @@ def render_mission_dispatch():
                 current_user = st.session_state.get("user", "admin")
                 
                 if save_mission_route(route_name.strip(), route_description.strip(), route_data, current_user):
-                    st.success(f"✅ Route '{route_name}' saved successfully!")
+                    st.success(t("missions.success_messages.route_saved"))
                     # Use a flag to clear form inputs on next run
                     st.session_state.clear_route_form = True
                     st.rerun()
                 else:
-                    st.error(f"❌ Failed to save route '{route_name}'. Route name may already exist.")
+                    st.error(t("missions.error_messages.route_save_failed"))
     
     st.markdown("---")
     
     # Load Route section
-    st.markdown("**📂 Load Route**")
+    st.markdown(f"**{t('missions.load_route_section')}**")
     with st.container():
         # Get current user for filtering routes
         current_user = st.session_state.get("user", "admin")
@@ -444,7 +444,7 @@ def render_mission_dispatch():
             
             with col1:
                 selected_route_display = st.selectbox(
-                    "Select Route:",
+                    t("missions.select_route"),
                     options=route_options,
                     key="selected_route",
                     help="Choose a saved route to load"
@@ -481,7 +481,7 @@ def render_mission_dispatch():
                             st.rerun()
                 else:
                     # Show normal load button
-                    if st.button("📂 Load Route", use_container_width=True):
+                    if st.button(t("missions.load_route_btn"), use_container_width=True):
                         if selected_route_display:
                             if len(st.session_state.mission_nodes_list) > 0:
                                 # Show confirmation dialog on next render
@@ -493,7 +493,7 @@ def render_mission_dispatch():
                                 load_route_data(route_id)
             
             with col3:
-                if st.button("🗑️ Delete Route", use_container_width=True, type="secondary"):
+                if st.button(t("missions.delete_route_btn"), use_container_width=True, type="secondary"):
                     if selected_route_display:
                         route_id = int(selected_route_display.split("ID: ")[1].rstrip(")"))
                         route_name = selected_route_display.split(" (ID:")[0]
@@ -529,7 +529,7 @@ def render_mission_dispatch():
     
     # Mission validation section
     st.markdown("---")
-    st.markdown("**✅ Mission Validation**")
+    st.markdown(f"**{t('missions.mission_validation')}**")
     
     try:
         validation_result = validate_nodes(st.session_state.mission_nodes_list)
@@ -587,7 +587,7 @@ def render_mission_dispatch():
         st.info("💡 Add nodes above to create a mission")
     
     with col_right:
-        st.markdown("**🗺️ Mission Map**")
+        st.markdown(f"**{t('missions.mission_map')}**")
         
         # Create map with waypoints using pydeck (always show map)
         import pydeck as pdk
@@ -783,7 +783,7 @@ def render_mission_dispatch():
         vda5050_order = st.session_state.vda5050_order_preview
         summary = create_mission_summary(vda5050_order)
         
-        st.markdown("**📋 VDA5050 Order Summary:**")
+        st.markdown(f"**{t('missions.vda5050_order_summary')}**")
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Order ID", summary["order_id"])
@@ -816,7 +816,7 @@ def render_mission_dispatch():
             order_id.strip()
         )
         
-        if st.button("🚀 Send Mission", type="primary", disabled=not send_enabled):
+        if st.button(t("missions.send_mission_btn"), type="primary", disabled=not send_enabled):
             try:
                 # Get nodes from session state
                 nodes = st.session_state.mission_nodes_list
@@ -908,7 +908,7 @@ def render_mission_dispatch():
                 st.error(f"❌ Failed to create mission: {str(e)}")
     
     with col2:
-        if st.button("🗑️ Clear Form"):
+        if st.button(t("missions.clear_form")):
             # Set flag to clear form on next render
             st.session_state.mission_form_clear = True
             st.rerun()

@@ -174,7 +174,8 @@
       "mission_send_failed": "❌ Failed to send mission",
       "validation_failed": "❌ Mission validation failed",
       "no_nodes": "❌ No nodes added to mission",
-      "invalid_coordinates": "❌ Invalid coordinates provided"
+      "invalid_coordinates": "❌ Invalid coordinates provided",
+      "route_name_required": "❌ Route name is required"
     }
   },
   "settings": {

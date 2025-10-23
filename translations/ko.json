@@ -174,7 +174,8 @@
       "mission_send_failed": "❌ 미션 전송에 실패했습니다",
       "validation_failed": "❌ 미션 검증에 실패했습니다",
       "no_nodes": "❌ 미션에 노드가 추가되지 않았습니다",
-      "invalid_coordinates": "❌ 잘못된 좌표가 제공되었습니다"
+      "invalid_coordinates": "❌ 잘못된 좌표가 제공되었습니다",
+      "route_name_required": "❌ 경로 이름이 필요합니다"
     }
   },
   "settings": {
