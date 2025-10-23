@@ -22,15 +22,6 @@ def render_settings():
     # Language selector
     selected_language = render_language_selector()
     
-    # Add reset language button
-    col1, col2 = st.columns([3, 1])
-    with col2:
-        if st.button(t("settings.language_reset"), type="secondary", help="Reset language to default (English)"):
-            from i18n_manager import i18n
-            i18n.reset_language_preference()
-            st.success(t("settings.language_reset_success"))
-            st.rerun()
-    
     st.markdown("---")
     
     # General Configuration

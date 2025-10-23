@@ -185,8 +185,6 @@
     "language_saved": "✅ Language changed to {language} and saved!",
     "language_preference_saved": "💾 Saved preference: {language}",
     "language_auto_save": "Language preference will be saved automatically",
-    "language_reset": "🔄 Reset to Default",
-    "language_reset_success": "✅ Language preference reset to default",
     "general_config_title": "General Configuration",
     "general_config_caption": "Fleet client identification settings",
     "manufacturer": "Manufacturer",
