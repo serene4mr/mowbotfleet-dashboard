@@ -50,12 +50,12 @@ def render_agv_details():
         else:
             st.error("🔋 Battery Critical")
 
-    # Mission Progress Section
-    st.markdown("**Mission Status**")
-    if agv.current_order:
-        st.write(f"Current Order: `{agv.current_order}`")
-    else:
-        st.write("No active mission")
+    # Mission Progress Section - Commented out
+    # st.markdown("**Mission Status**")
+    # if agv.current_order:
+    #     st.write(f"Current Order: `{agv.current_order}`")
+    # else:
+    #     st.write("No active mission")
 
     # Sensor Diagnostics Section
     if agv.sensor_status:
@@ -96,12 +96,12 @@ def render_agv_details():
     else:
         st.success("✅ No active errors")
 
-    # Factsheet Section (Static for now)
-    with st.expander("AGV Specifications"):
-        st.write("**Physical Specifications**")
-        st.write("- Length: 1.2m")
-        st.write("- Width: 0.8m") 
-        st.write("- Height: 1.5m")
-        st.write("- Max Load: 500kg")
-        st.write("- Max Speed: 2.0 m/s")
-        st.write("- Navigation: LiDAR + GPS")
+    # Factsheet Section (Static for now) - Commented out
+    # with st.expander("AGV Specifications"):
+    #     st.write("**Physical Specifications**")
+    #     st.write("- Length: 1.2m")
+    #     st.write("- Width: 0.8m") 
+    #     st.write("- Height: 1.5m")
+    #     st.write("- Max Load: 500kg")
+    #     st.write("- Max Speed: 2.0 m/s")
+    #     st.write("- Navigation: LiDAR + GPS")

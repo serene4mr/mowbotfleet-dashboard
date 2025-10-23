@@ -173,34 +173,33 @@ def render_row2():
 
 
 def render_debug():
-    """Debug section to show MQTT connection and message details"""
-    with st.expander("🔧 Debug Information", expanded=False):
-        debug_info = get_debug_info()
-        
-        st.write("**Connection Status:**")
-        st.write(f"- Connected: {debug_info['connected']}")
-        st.write(f"- Client Exists: {debug_info['client_exists']}")
-        st.write(f"- Connection Task Alive: {debug_info['connection_task_alive']}")
-        st.write(f"- Fleet State Count: {debug_info['fleet_state_count']}")
-        st.write(f"- Fleet State Keys: {debug_info['fleet_state_keys']}")
-        
-        st.write("**Expected MQTT Topics:**")
-        st.write("- State: `uagv/v2/+/+/state`")
-        st.write("- Connection: `uagv/v2/+/+/connection`")
-        st.write("- Factsheet: `uagv/v2/+/+/factsheet`")
-        
-        if fleet_state:
-            st.write("**Latest AGV Data:**")
-            for serial, agv in fleet_state.items():
-                st.write(f"**{serial}:**")
-                st.write(f"- Battery: {agv.battery}%")
-                st.write(f"- Mode: {agv.operating_mode}")
-                st.write(f"- Position: ({agv.position[0]:.2f}, {agv.position[1]:.2f})")
-                st.write(f"- Last Update: {agv.last_update}")
-                if agv.errors:
-                    st.write(f"- Errors: {len(agv.errors)}")
-                st.write("---")
-        else:
-            st.write("No AGV data received yet.")
-            st.caption("Make sure AGVs are publishing state messages to the MQTT broker.")
-            st.caption("Check the console output for connection and subscription details.")
+    """Debug section to show MQTT connection and message details - Commented out"""
+    # with st.expander("🔧 Debug Information", expanded=False):
+    #     debug_info = get_debug_info()
+    #     
+    #     st.write("**Connection Status:**")
+    #     st.write(f"- Connected: {debug_info['connected']}")
+    #     st.write(f"- Client Exists: {debug_info['client_exists']}")
+    #     st.write(f"- Connection Task Alive: {debug_info['connection_task_alive']}")
+    #     st.write(f"- Fleet State Count: {debug_info['fleet_state_count']}")
+    #     st.write(f"- Fleet State Keys: {debug_info['fleet_state_keys']}")
+    #     
+    #     st.write("**Expected MQTT Topics:**")
+    #     st.write("- State: `uagv/v2/+/+/state`")
+    #     st.write("- Connection: `uagv/v2/+/+/connection`")
+    #     st.write("- Factsheet: `uagv/v2/+/+/factsheet`")
+    #     
+    #     if fleet_state:
+    #         st.write("**Latest AGV Data:**")
+    #         for serial, agv in fleet_state.items():
+    #             st.write(f"**{serial}:**")
+    #             st.write(f"- Battery: {agv.battery}%")
+    #             st.write(f"- Mode: {agv.operating_mode}")
+    #             st.write(f"- Position: ({agv.position[0]:.2f}, {agv.position[1]:.2f})")
+    #             st.write(f"- Last Update: {agv.last_update}")
+    #             if agv.errors:
+    #                 st.write(f"- Errors: {len(agv.errors)}")
+    #             st.write("---")
+    #     else:
+    #         st.write("No AGV data received yet.")
+    pass
