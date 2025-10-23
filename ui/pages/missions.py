@@ -6,10 +6,11 @@ from mqtt_client import fleet_state
 from ..components.mission_dispatch import render_mission_dispatch
 from ..components.mission_table import render_active_missions
 from ..components.mission_controls import render_mission_status_summary
+from i18n_manager import t
 
 def render_missions():
     """Render the Missions page"""
-    st.markdown("### 🚀 Missions")
+    st.markdown(f"### 🚀 {t('missions.title')}")
     
     # Mission status summary (top)
     render_mission_status_summary()

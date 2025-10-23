@@ -9,6 +9,7 @@ from broker_config_manager import broker_config_manager
 from ui.login import render_login
 from ui.layout import render_sidebar, render_dashboard, render_missions_page
 from ui.pages.settings import render_settings
+from i18n_manager import t
 
 # Configure Streamlit page
 st.set_page_config(
@@ -58,9 +59,10 @@ if page != "Settings" and not is_connected():
     ))
 
 # Render the selected page
-if page == "Dashboard":
+# Handle both English and translated page names
+if page in ["Dashboard", t("navigation.dashboard")]:
     render_dashboard()
-elif page == "Missions":
+elif page in ["Missions", t("navigation.missions")]:
     render_missions_page()
-elif page == "Settings":
+elif page in ["Settings", t("navigation.settings")]:
     render_settings()

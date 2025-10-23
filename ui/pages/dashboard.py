@@ -7,6 +7,7 @@ from mqtt_client import fleet_state, is_connected, get_debug_info, get_broker_in
 from ..components.map import render_map
 from ..components.agv_details import render_agv_details
 from ..components.controls import render_quick_controls
+from i18n_manager import t
 
 
 @st.fragment(run_every="1s")
