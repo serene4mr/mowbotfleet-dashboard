@@ -20,7 +20,7 @@ def render_quick_controls():
         st.write(t("agv.agv_not_available"))
         return
 
-    st.markdown(f"**{t('agv.controls')} for {selected_serial}**")
+    st.markdown(f"**{selected_serial} {t('agv.controls')}**")
     
     # E-STOP button
     if st.button(t("agv.estop"), type="primary", use_container_width=True):
