@@ -5,7 +5,7 @@ import asyncio
 from config import load_config, save_config, get_broker_url
 from mqtt_client import connect, disconnect
 from auth import add_or_update_user, list_users, delete_user, get_user_count, ensure_default_admin, verify_user
-from secure_config_manager import secure_config_manager
+from broker_config_manager import broker_config_manager
 from streamlit.runtime.scriptrunner import RerunException, RerunData
 
 def render_settings():
@@ -133,7 +133,7 @@ def render_settings():
     st.info("🔒 Broker credentials are stored securely in encrypted database")
     
     # Load secure broker config
-    broker_config = secure_config_manager.get_broker_config()
+    broker_config = broker_config_manager.get_broker_config()
     
     host = st.text_input("Broker Host", value=broker_config["host"])
     port = st.number_input("Broker Port", value=broker_config["port"])
@@ -155,7 +155,7 @@ def render_settings():
         
         # Save securely to encrypted database
         print(f"🔒 Saving broker config securely: {host}:{port} (TLS: {use_tls})")
-        if secure_config_manager.save_broker_config(new_broker_config):
+        if broker_config_manager.save_broker_config(new_broker_config):
             st.success("✅ Broker configuration saved securely!")
         else:
             st.error("❌ Failed to save broker configuration")
@@ -164,8 +164,8 @@ def render_settings():
         # Reconnect MQTT synchronously
         try:
             asyncio.run(disconnect())
-            broker_url = secure_config_manager.get_broker_url()
-            username, password = secure_config_manager.get_broker_credentials()
+            broker_url = broker_config_manager.get_broker_url()
+            username, password = broker_config_manager.get_broker_credentials()
             asyncio.run(connect(broker_url, username, password, client_id="MowbotFleet"))
             st.success("🔄 Reconnected to broker successfully!")
         except Exception as e:

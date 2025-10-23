@@ -5,7 +5,7 @@ import asyncio
 from config import load_config, get_broker_url, get_broker_credentials
 from auth import ensure_default_admin
 from mqtt_client import connect, is_connected
-from secure_config_manager import secure_config_manager
+from broker_config_manager import broker_config_manager
 from ui.login import render_login
 from ui.layout import render_sidebar, render_dashboard, render_missions_page
 from ui.pages.settings import render_settings
@@ -25,8 +25,8 @@ page = render_sidebar()
 if page != "Settings" and not is_connected():
     # Try secure config first, fallback to YAML config
     try:
-        broker_url = secure_config_manager.get_broker_url()
-        username, password = secure_config_manager.get_broker_credentials()
+        broker_url = broker_config_manager.get_broker_url()
+        username, password = broker_config_manager.get_broker_credentials()
         print(f"🔒 Using secure broker configuration")
     except:
         # Fallback to YAML config
