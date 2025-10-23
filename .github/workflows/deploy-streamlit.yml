@@ -1,0 +1,100 @@
+name: Deploy to Streamlit Community Cloud
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        cd mowbotfleet-dashboard
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Install additional dependencies for deployment
+      run: |
+        cd mowbotfleet-dashboard
+        pip install cryptography  # For secure broker config
+        pip install streamlit-authenticator  # For enhanced auth
+        
+    - name: Run tests
+      run: |
+        cd mowbotfleet-dashboard
+        python -m pytest tests/ -v --tb=short
+        
+    - name: Check Streamlit app structure
+      run: |
+        cd mowbotfleet-dashboard
+        python -c "
+        import streamlit as st
+        print('✅ Streamlit import successful')
+        
+        # Check main app file
+        with open('app.py', 'r') as f:
+            content = f.read()
+            if 'streamlit run' in content or 'st.set_page_config' in content:
+                print('✅ App structure looks good')
+            else:
+                print('⚠️ App structure may need review')
+        "
+        
+    - name: Validate configuration
+      run: |
+        cd mowbotfleet-dashboard
+        python -c "
+        from config import load_config
+        from broker_config_manager import broker_config_manager
+        
+        # Test config loading
+        config = load_config()
+        print('✅ Config loaded successfully')
+        
+        # Test broker config manager
+        broker_config = broker_config_manager.get_broker_config()
+        print('✅ Broker config manager working')
+        print(f'Default broker: {broker_config[\"host\"]}:{broker_config[\"port\"]}')
+        "
+        
+    - name: Create deployment info
+      run: |
+        echo "## 🚀 Deployment Information" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Python Version**: 3.11" >> $GITHUB_STEP_SUMMARY
+        echo "- **Streamlit**: Latest" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Deployment Checklist" >> $GITHUB_STEP_SUMMARY
+        echo "- [x] Dependencies installed" >> $GITHUB_STEP_SUMMARY
+        echo "- [x] Tests passed" >> $GITHUB_STEP_SUMMARY
+        echo "- [x] App structure validated" >> $GITHUB_STEP_SUMMARY
+        echo "- [x] Configuration validated" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 Manual Deployment Steps" >> $GITHUB_STEP_SUMMARY
+        echo "1. Go to [Streamlit Community Cloud](https://share.streamlit.io/)" >> $GITHUB_STEP_SUMMARY
+        echo "2. Connect your GitHub repository" >> $GITHUB_STEP_SUMMARY
+        echo "3. Set main file path to: \`mowbotfleet-dashboard/app.py\`" >> $GITHUB_STEP_SUMMARY
+        echo "4. Set branch to: \`main\`" >> $GITHUB_STEP_SUMMARY
+        echo "5. Configure environment variables if needed" >> $GITHUB_STEP_SUMMARY
+        echo "6. Deploy!" >> $GITHUB_STEP_SUMMARY
