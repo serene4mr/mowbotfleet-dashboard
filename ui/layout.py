@@ -6,9 +6,10 @@ from .pages.settings import render_settings
 from .pages.missions import render_missions
 from streamlit.runtime.scriptrunner import RerunException, RerunData
 from mqtt_client import get_broker_info
+from i18n_manager import t
 
 def render_sidebar():
-    if st.sidebar.button("🔒 Logout"):
+    if st.sidebar.button(t("navigation.logout")):
         st.session_state.clear()
         raise RerunException(RerunData())
     
@@ -16,17 +17,17 @@ def render_sidebar():
     broker_info = get_broker_info()
     if broker_info["status"] == "Connected":
         tls_icon = "🔒" if broker_info["tls"] else "🔓"
-        st.sidebar.success(f"🟢 Broker: {broker_info['host']}:{broker_info['port']} {tls_icon}")
+        st.sidebar.success(f"🟢 {t('dashboard.broker_status')}: {broker_info['host']}:{broker_info['port']} {tls_icon}")
         st.sidebar.caption(f"User: {broker_info['username']}")
     else:
-        st.sidebar.error("🔴 Broker: Disconnected")
+        st.sidebar.error(f"🔴 {t('dashboard.broker_status')}: {t('dashboard.disconnected')}")
     
     st.sidebar.markdown("---")
     
     # Navigation - pure Streamlit state management, no manual index
     selected_page = st.sidebar.radio(
-        "Navigate", 
-        ["Dashboard", "Missions", "Settings"],
+        t("navigation.navigate"), 
+        [t("navigation.dashboard"), t("navigation.missions"), t("navigation.settings")],
         key="page_navigation"
     )
     

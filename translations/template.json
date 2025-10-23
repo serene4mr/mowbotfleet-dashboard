@@ -1,0 +1,105 @@
+{
+  "_comment": "Template for adding new languages. Copy this file and translate all values.",
+  "_instructions": [
+    "1. Copy this file to [language_code].json (e.g., fr.json for French)",
+    "2. Translate all string values to the target language",
+    "3. Keep the same JSON structure and keys",
+    "4. Test the translation in the application",
+    "5. Add the new language to i18n_manager.py"
+  ],
+  "app": {
+    "title": "[Translate: App Title]",
+    "description": "[Translate: App Description]",
+    "version": "1.0.0"
+  },
+  "navigation": {
+    "dashboard": "[Translate: Dashboard]",
+    "missions": "[Translate: Missions]",
+    "settings": "[Translate: Settings]",
+    "logout": "🔒 [Translate: Logout]"
+  },
+  "broker": {
+    "title": "[Translate: Broker Configuration]",
+    "description": "🔒 [Translate: Broker credentials are stored securely in encrypted database]",
+    "host": "[Translate: Broker Host]",
+    "port": "[Translate: Broker Port]",
+    "use_tls": "[Translate: Use TLS]",
+    "username": "[Translate: Broker Username]",
+    "password": "[Translate: Broker Password]",
+    "save_reconnect": "💾 [Translate: Save & Reconnect]",
+    "save_success": "✅ [Translate: Broker configuration saved securely!]",
+    "save_error": "❌ [Translate: Failed to save broker configuration]",
+    "reconnect_success": "🔄 [Translate: Reconnected to broker successfully!]",
+    "reconnect_error": "[Translate: Reconnection failed: {error}]"
+  },
+  "dashboard": {
+    "title": "[Translate: Fleet Dashboard]",
+    "broker_status": "[Translate: Broker]",
+    "fleet_status": "[Translate: Fleet]",
+    "alerts": "[Translate: Alerts]",
+    "connected": "[Translate: Connected]",
+    "disconnected": "[Translate: Disconnected]",
+    "online": "[Translate: Online]",
+    "offline": "[Translate: Offline]"
+  },
+  "agv": {
+    "status": "[Translate: Status]",
+    "position": "[Translate: Position]",
+    "heading": "[Translate: Heading]",
+    "battery": "[Translate: Battery]",
+    "errors": "[Translate: Errors]",
+    "sensor_diagnostics": "[Translate: Sensor Diagnostics]",
+    "controls": "[Translate: Quick Controls]",
+    "estop": "🛑 [Translate: E-STOP]",
+    "estop_success": "✅ [Translate: E-STOP sent to {serial}]",
+    "estop_error": "❌ [Translate: Failed to send E-STOP to {serial}]"
+  },
+  "missions": {
+    "title": "[Translate: Mission Dispatch]",
+    "create_mission": "[Translate: Create Mission]",
+    "load_route": "[Translate: Load Route]",
+    "save_route": "[Translate: Save Route]",
+    "delete_route": "🗑️ [Translate: Delete Route]",
+    "route_name": "[Translate: Route Name]",
+    "route_description": "[Translate: Route Description]",
+    "add_node": "[Translate: Add Node]",
+    "longitude": "[Translate: Longitude]",
+    "latitude": "[Translate: Latitude]",
+    "heading": "[Translate: Heading]",
+    "use_agv_position": "[Translate: Use AGV Position]",
+    "send_mission": "[Translate: Send Mission]",
+    "mission_sent": "✅ [Translate: Mission sent successfully!]",
+    "mission_error": "❌ [Translate: Failed to send mission]"
+  },
+  "settings": {
+    "title": "[Translate: Settings]",
+    "language": "[Translate: Language]",
+    "heading_offset": "[Translate: Heading Offset (degrees)]",
+    "heading_offset_help": "[Translate: Empirical correction for AGV arrow orientation on map (adjust if arrows don't point correctly)]",
+    "heading_offset_tip": "🧭 **[Translate: Tip:]** [Translate: Adjust this if AGV arrows don't point in the correct direction on the map]"
+  },
+  "common": {
+    "save": "[Translate: Save]",
+    "cancel": "[Translate: Cancel]",
+    "delete": "[Translate: Delete]",
+    "edit": "[Translate: Edit]",
+    "add": "[Translate: Add]",
+    "remove": "[Translate: Remove]",
+    "confirm": "[Translate: Confirm]",
+    "yes": "[Translate: Yes]",
+    "no": "[Translate: No]",
+    "ok": "[Translate: OK]",
+    "error": "[Translate: Error]",
+    "success": "[Translate: Success]",
+    "warning": "[Translate: Warning]",
+    "info": "[Translate: Info]",
+    "loading": "[Translate: Loading...]",
+    "refresh": "[Translate: Refresh]"
+  },
+  "errors": {
+    "connection_failed": "[Translate: Connection failed]",
+    "invalid_credentials": "[Translate: Invalid credentials]",
+    "network_error": "[Translate: Network error]",
+    "unknown_error": "[Translate: Unknown error occurred]"
+  }
+}

@@ -6,15 +6,25 @@ from config import load_config, save_config, get_broker_url
 from mqtt_client import connect, disconnect
 from auth import add_or_update_user, list_users, delete_user, get_user_count, ensure_default_admin, verify_user
 from broker_config_manager import broker_config_manager
+from i18n_manager import t, render_language_selector
 from streamlit.runtime.scriptrunner import RerunException, RerunData
 
 def render_settings():
-    st.header("Settings")
+    st.header(t("settings.title"))
 
     # Load config
     cfg = load_config()
     
-    # General Configuration (displayed first)
+    # Language Selection (displayed first)
+    st.subheader("🌍 Language Settings")
+    st.caption("Select your preferred language / 선호하는 언어를 선택하세요")
+    
+    # Language selector
+    selected_language = render_language_selector()
+    
+    st.markdown("---")
+    
+    # General Configuration
     st.subheader("General Configuration")
     st.caption("Fleet client identification settings")
     
@@ -129,19 +139,19 @@ def render_settings():
     st.markdown("---")
     
     # Broker Configuration (Secure)
-    st.subheader("Broker Configuration")
-    st.info("🔒 Broker credentials are stored securely in encrypted database")
+    st.subheader(t("broker.title"))
+    st.info(t("broker.description"))
     
     # Load secure broker config
     broker_config = broker_config_manager.get_broker_config()
     
-    host = st.text_input("Broker Host", value=broker_config["host"])
-    port = st.number_input("Broker Port", value=broker_config["port"])
-    use_tls = st.checkbox("Use TLS", value=broker_config["use_tls"])
-    buser = st.text_input("Broker Username", value=broker_config["user"])
-    bpass = st.text_input("Broker Password", type="password", value=broker_config["password"])
+    host = st.text_input(t("broker.host"), value=broker_config["host"])
+    port = st.number_input(t("broker.port"), value=broker_config["port"])
+    use_tls = st.checkbox(t("broker.use_tls"), value=broker_config["use_tls"])
+    buser = st.text_input(t("broker.username"), value=broker_config["user"])
+    bpass = st.text_input(t("broker.password"), type="password", value=broker_config["password"])
 
-    if st.button("💾 Save & Reconnect", use_container_width=True):
+    if st.button(t("broker.save_reconnect"), use_container_width=True):
         # Update broker configuration securely
         new_broker_config = {
             "host": host,
@@ -154,9 +164,9 @@ def render_settings():
         # Save securely to encrypted database
         print(f"🔒 Saving broker config securely: {host}:{port} (TLS: {use_tls})")
         if broker_config_manager.save_broker_config(new_broker_config):
-            st.success("✅ Broker configuration saved securely!")
+            st.success(t("broker.save_success"))
         else:
-            st.error("❌ Failed to save broker configuration")
+            st.error(t("broker.save_error"))
             return
 
         # Reconnect MQTT synchronously
@@ -165,9 +175,9 @@ def render_settings():
             broker_url = broker_config_manager.get_broker_url()
             username, password = broker_config_manager.get_broker_credentials()
             asyncio.run(connect(broker_url, username, password, client_id="MowbotFleet"))
-            st.success("🔄 Reconnected to broker successfully!")
+            st.success(t("broker.reconnect_success"))
         except Exception as e:
-            st.error(f"Reconnection failed: {e}")
+            st.error(t("broker.reconnect_error", error=str(e)))
             # Continue anyway to save the config
 
         # Rerun to update header

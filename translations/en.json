@@ -1,0 +1,97 @@
+{
+  "app": {
+    "title": "Mowbot Fleet Dashboard",
+    "description": "AGV Fleet Management System",
+    "version": "1.0.0"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "missions": "Missions", 
+    "settings": "Settings",
+    "logout": "🔒 Logout"
+  },
+  "broker": {
+    "title": "Broker Configuration",
+    "description": "🔒 Broker credentials are stored securely in encrypted database",
+    "host": "Broker Host",
+    "port": "Broker Port",
+    "use_tls": "Use TLS",
+    "username": "Broker Username",
+    "password": "Broker Password",
+    "save_reconnect": "💾 Save & Reconnect",
+    "save_success": "✅ Broker configuration saved securely!",
+    "save_error": "❌ Failed to save broker configuration",
+    "reconnect_success": "🔄 Reconnected to broker successfully!",
+    "reconnect_error": "Reconnection failed: {error}"
+  },
+  "dashboard": {
+    "title": "Fleet Dashboard",
+    "broker_status": "Broker",
+    "fleet_status": "Fleet",
+    "alerts": "Alerts",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "online": "Online",
+    "offline": "Offline"
+  },
+  "agv": {
+    "status": "Status",
+    "position": "Position",
+    "heading": "Heading",
+    "battery": "Battery",
+    "errors": "Errors",
+    "sensor_diagnostics": "Sensor Diagnostics",
+    "controls": "Quick Controls",
+    "estop": "🛑 E-STOP",
+    "estop_success": "✅ E-STOP sent to {serial}",
+    "estop_error": "❌ Failed to send E-STOP to {serial}"
+  },
+  "missions": {
+    "title": "Mission Dispatch",
+    "create_mission": "Create Mission",
+    "load_route": "Load Route",
+    "save_route": "Save Route",
+    "delete_route": "🗑️ Delete Route",
+    "route_name": "Route Name",
+    "route_description": "Route Description",
+    "add_node": "Add Node",
+    "longitude": "Longitude",
+    "latitude": "Latitude", 
+    "heading": "Heading",
+    "use_agv_position": "Use AGV Position",
+    "send_mission": "Send Mission",
+    "mission_sent": "✅ Mission sent successfully!",
+    "mission_error": "❌ Failed to send mission"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "heading_offset": "Heading Offset (degrees)",
+    "heading_offset_help": "Empirical correction for AGV arrow orientation on map (adjust if arrows don't point correctly)",
+    "heading_offset_tip": "🧭 **Tip:** Adjust this if AGV arrows don't point in the correct direction on the map"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "remove": "Remove",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "loading": "Loading...",
+    "refresh": "Refresh"
+  },
+  "errors": {
+    "connection_failed": "Connection failed",
+    "invalid_credentials": "Invalid credentials",
+    "network_error": "Network error",
+    "unknown_error": "Unknown error occurred"
+  }
+}
