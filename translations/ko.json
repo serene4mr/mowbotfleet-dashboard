@@ -153,7 +153,29 @@
     "mission_map": "🗺️ 미션 지도",
     "vda5050_order_summary": "📋 VDA5050 주문 요약:",
     "send_mission_btn": "🚀 미션 전송",
-    "clear_form": "🗑️ 양식 지우기"
+    "clear_form": "🗑️ 양식 지우기",
+    "help_text": "도움말: 미션 디스패치를 위해 테이블이나 지도에서 AGV를 클릭하여 선택하세요",
+    "no_agvs_available": "미션 디스패치에 사용할 수 있는 AGV가 없습니다",
+    "mission_form_help": "새 미션을 디스패치하려면 아래 미션 세부사항을 입력하세요",
+    "node_help_text": "미션 경로를 만들기 위해 웨이포인트를 추가하세요. 각 노드는 정지 지점을 나타냅니다.",
+    "route_help_text": "빠른 미션 생성을 위해 자주 사용하는 경로를 저장하세요",
+    "validation_help": "AGV에 전송하기 전에 미션 세부사항을 검토하세요",
+    "success_messages": {
+      "route_saved": "✅ 경로가 성공적으로 저장되었습니다!",
+      "route_loaded": "✅ 경로가 성공적으로 로드되었습니다!",
+      "route_deleted": "✅ 경로가 성공적으로 삭제되었습니다!",
+      "mission_sent": "✅ 미션이 성공적으로 전송되었습니다!",
+      "form_cleared": "✅ 양식이 성공적으로 지워졌습니다!"
+    },
+    "error_messages": {
+      "route_save_failed": "❌ 경로 저장에 실패했습니다",
+      "route_load_failed": "❌ 경로 로드에 실패했습니다",
+      "route_delete_failed": "❌ 경로 삭제에 실패했습니다",
+      "mission_send_failed": "❌ 미션 전송에 실패했습니다",
+      "validation_failed": "❌ 미션 검증에 실패했습니다",
+      "no_nodes": "❌ 미션에 노드가 추가되지 않았습니다",
+      "invalid_coordinates": "❌ 잘못된 좌표가 제공되었습니다"
+    }
   },
   "settings": {
     "title": "설정",

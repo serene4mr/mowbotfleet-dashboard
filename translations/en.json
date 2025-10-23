@@ -153,7 +153,29 @@
     "mission_map": "🗺️ Mission Map",
     "vda5050_order_summary": "📋 VDA5050 Order Summary:",
     "send_mission_btn": "🚀 Send Mission",
-    "clear_form": "🗑️ Clear Form"
+    "clear_form": "🗑️ Clear Form",
+    "help_text": "Help: Click an AGV in the table or map to select it for mission dispatch",
+    "no_agvs_available": "No AGVs available for mission dispatch",
+    "mission_form_help": "Fill in the mission details below to dispatch a new mission",
+    "node_help_text": "Add waypoints to create a mission path. Each node represents a stop point.",
+    "route_help_text": "Save frequently used routes for quick mission creation",
+    "validation_help": "Review mission details before sending to AGV",
+    "success_messages": {
+      "route_saved": "✅ Route saved successfully!",
+      "route_loaded": "✅ Route loaded successfully!",
+      "route_deleted": "✅ Route deleted successfully!",
+      "mission_sent": "✅ Mission sent successfully!",
+      "form_cleared": "✅ Form cleared successfully!"
+    },
+    "error_messages": {
+      "route_save_failed": "❌ Failed to save route",
+      "route_load_failed": "❌ Failed to load route",
+      "route_delete_failed": "❌ Failed to delete route",
+      "mission_send_failed": "❌ Failed to send mission",
+      "validation_failed": "❌ Mission validation failed",
+      "no_nodes": "❌ No nodes added to mission",
+      "invalid_coordinates": "❌ Invalid coordinates provided"
+    }
   },
   "settings": {
     "title": "Settings",

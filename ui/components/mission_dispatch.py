@@ -131,7 +131,7 @@ def render_mission_dispatch():
     heading_offset = map_config.get("heading_offset_degrees", -30)  # Default -30° if not configured
     
     # Target AGV selection with enhanced display (auto-refresh every 1s)
-    st.markdown("**🎯 Target AGV Selection**")
+    st.markdown(f"**{t('missions.target_agv_selection')}**")
     target_agv_serial = render_agv_selection_with_dropdown()
     
     if not target_agv_serial:
@@ -143,7 +143,7 @@ def render_mission_dispatch():
     st.markdown("---")
     
     # Order ID section
-    st.markdown("**📋 Mission Details**")
+    st.markdown(f"**{t('missions.mission_details')}**")
     
     # Order ID input
     # Initialize session state if not exists
@@ -151,16 +151,16 @@ def render_mission_dispatch():
         st.session_state.mission_order_id = generate_order_id()
     
     order_id = st.text_input(
-        "Order ID:",
+        t("missions.order_id"),
         key="mission_order_id",
         help="Unique identifier for this mission. Auto-generated if left as default."
     )
     
     # Nodes input with enhanced validation
-    st.markdown("**🗺️ Mission Waypoints**")
+    st.markdown(f"**{t('missions.mission_waypoints')}**")
     
     # Show format help
-    with st.expander("📖 Node Format Help"):
+    with st.expander(t("missions.node_format_help")):
         st.markdown("""
         **How to Add Nodes:**
         1. Fill in the form fields below for each waypoint
@@ -198,7 +198,7 @@ def render_mission_dispatch():
     col_left, col_right = st.columns([1, 1])
     
     with col_left:
-        st.markdown("**📍 Add New Node**")
+        st.markdown(f"**{t('missions.add_new_node')}**")
         
         with st.form("add_node_form"):
             # Generate unique keys based on form counter
@@ -212,7 +212,7 @@ def render_mission_dispatch():
             
             with col1:
                 node_id = st.text_input(
-                    "Node ID:",
+                    t("missions.node_id"),
                     placeholder="e.g., warehouse_pickup",
                     key=node_id_key
                 )
@@ -222,7 +222,7 @@ def render_mission_dispatch():
                 x_value = st.session_state.get('agv_x', 0.0) if st.session_state.agv_position_used else 0.0
                 
                 x_coord = st.number_input(
-                    "X (Longitude):",
+                    t("missions.x_longitude"),
                     value=x_value,
                     step=0.001,
                     format="%.6f",
@@ -235,7 +235,7 @@ def render_mission_dispatch():
                 y_value = st.session_state.get('agv_y', 0.0) if st.session_state.agv_position_used else 0.0
                 
                 y_coord = st.number_input(
-                    "Y (Latitude):",
+                    t("missions.y_latitude"),
                     value=y_value,
                     step=0.001,
                     format="%.6f",
@@ -248,7 +248,7 @@ def render_mission_dispatch():
                 theta_value = st.session_state.get('agv_theta', 0.0) if st.session_state.agv_position_used else 0.0
                 
                 theta = st.number_input(
-                    "Heading (rad):",
+                    t("missions.heading_rad"),
                     value=theta_value,
                     step=0.001,
                     format="%.6f",
@@ -257,7 +257,7 @@ def render_mission_dispatch():
             
             col1, col2 = st.columns([1, 4])
             with col1:
-                add_node = st.form_submit_button("➕ Add Node", use_container_width=True)
+                add_node = st.form_submit_button(t("missions.add_node"), use_container_width=True)
             
             with col2:
                 # Check if add_node was clicked
