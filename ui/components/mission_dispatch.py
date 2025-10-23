@@ -10,6 +10,7 @@ from utils.mission_utils import (
 from utils.map_utils import get_map_style_for_pydeck, get_mapbox_api_keys, get_default_zoom
 from config import load_config
 from mission_route_manager import save_mission_route, load_mission_route, list_mission_routes, delete_mission_route
+from i18n_manager import t
 
 def load_route_data(route_id: int):
     """Load route data and update the mission form"""
@@ -82,7 +83,7 @@ def render_agv_selection_with_dropdown():
     
     # Dropdown outside fragment for immediate response
     target_agv = st.selectbox(
-        "Select Target AGV:",
+        t("missions.select_target_agv"),
         options=agv_display_names,
         index=selected_index,
         key="mission_target_agv_display",
@@ -114,7 +115,7 @@ def render_agv_info(target_agv_serial):
 
 def render_mission_dispatch():
     """Render mission dispatch form with enhanced validation and AGV selection"""
-    st.markdown("#### 📝 Dispatch New Mission")
+    st.markdown(f"#### {t('missions.dispatch_new_mission')}")
     
     # Handle form clearing flag
     if st.session_state.get('mission_form_clear', False):
