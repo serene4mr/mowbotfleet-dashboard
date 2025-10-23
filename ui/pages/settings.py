@@ -137,6 +137,7 @@ def render_settings():
 
     if st.button("💾 Save & Reconnect"):
         # Update broker settings in nested structure
+        # Update broker settings in the loaded config
         new_cfg = cfg.copy()
         new_cfg["broker"]["host"] = host
         new_cfg["broker"]["port"] = port
@@ -144,11 +145,9 @@ def render_settings():
         new_cfg["broker"]["user"] = buser
         new_cfg["broker"]["password"] = bpass
         
-        # Save only the broker settings (not the full config)
-        broker_config = {
-            "broker": new_cfg["broker"]
-        }
-        save_config(broker_config)
+        # Save the full configuration with updated broker settings
+        print(f"💾 Saving broker config: {host}:{port} (TLS: {use_tls})")
+        save_config(new_cfg)
 
         # Reconnect MQTT synchronously
         try:

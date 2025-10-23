@@ -24,8 +24,13 @@ page = render_sidebar()
 if page != "Settings" and not is_connected():
     cfg = load_config()
     username, password = get_broker_credentials(cfg)
+    broker_url = get_broker_url(cfg)
+    print(f"🔄 Auto-connecting on startup:")
+    print(f"   Broker URL: {broker_url}")
+    print(f"   Username: {username}")
+    print(f"   Password: {'***' if password else 'None'}")
     asyncio.run(connect(
-        get_broker_url(cfg),
+        broker_url,
         username,
         password,
         client_id="MowbotFleet"
