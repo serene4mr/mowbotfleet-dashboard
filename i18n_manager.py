@@ -9,6 +9,7 @@ import os
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 import streamlit as st
+from config import load_config, save_config
 
 class I18nManager:
     """Manages internationalization for the application"""
@@ -24,7 +25,7 @@ class I18nManager:
         
         # Initialize session state for language preference
         if "language" not in st.session_state:
-            st.session_state.language = self._detect_language()
+            st.session_state.language = self._load_saved_language()
     
     def _load_translations(self):
         """Load all translation files from the translations directory"""
@@ -44,8 +45,43 @@ class I18nManager:
             except Exception as e:
                 print(f"❌ Failed to load translations for {language_code}: {e}")
     
+    def _load_saved_language(self) -> str:
+        """Load saved language preference from config"""
+        try:
+            config = load_config()
+            saved_language = config.get("general", {}).get("language", None)
+            
+            if saved_language and saved_language in self.translations:
+                print(f"🌍 Loaded saved language preference: {saved_language}")
+                return saved_language
+            else:
+                print(f"🌍 No valid saved language found, using default: {self.fallback_language}")
+                return self.fallback_language
+        except Exception as e:
+            print(f"⚠️ Failed to load saved language: {e}")
+            return self.fallback_language
+    
+    def _save_language_preference(self, language_code: str):
+        """Save language preference to config"""
+        try:
+            config = load_config()
+            
+            # Ensure general section exists
+            if "general" not in config:
+                config["general"] = {}
+            
+            # Save language preference
+            config["general"]["language"] = language_code
+            
+            # Save to config file
+            save_config(config)
+            print(f"💾 Saved language preference: {language_code}")
+            
+        except Exception as e:
+            print(f"❌ Failed to save language preference: {e}")
+    
     def _detect_language(self) -> str:
-        """Detect user's preferred language"""
+        """Detect user's preferred language (fallback method)"""
         # Try to get language from browser (if available)
         try:
             # This is a simplified detection - in production you might want more sophisticated detection
@@ -74,11 +110,16 @@ class I18nManager:
         
         return available
     
-    def set_language(self, language_code: str):
-        """Set the current language"""
+    def set_language(self, language_code: str, save_preference: bool = True):
+        """Set the current language and optionally save preference"""
         if language_code in self.translations:
             self.current_language = language_code
             st.session_state.language = language_code
+            
+            # Save language preference to config
+            if save_preference:
+                self._save_language_preference(language_code)
+            
             print(f"🌍 Language set to: {language_code}")
         else:
             print(f"⚠️ Language not available: {language_code}")
@@ -86,6 +127,25 @@ class I18nManager:
     def get_current_language(self) -> str:
         """Get the current language"""
         return st.session_state.get("language", self.current_language)
+    
+    def get_saved_language(self) -> str:
+        """Get the saved language preference from config"""
+        try:
+            config = load_config()
+            return config.get("general", {}).get("language", self.fallback_language)
+        except:
+            return self.fallback_language
+    
+    def reset_language_preference(self):
+        """Reset language preference to default"""
+        try:
+            config = load_config()
+            if "general" in config and "language" in config["general"]:
+                del config["general"]["language"]
+                save_config(config)
+                print("🔄 Language preference reset to default")
+        except Exception as e:
+            print(f"❌ Failed to reset language preference: {e}")
     
     def t(self, key: str, **kwargs) -> str:
         """
@@ -180,9 +240,10 @@ def t(key: str, **kwargs) -> str:
 
 # Language selector component
 def render_language_selector():
-    """Render language selector component"""
+    """Render language selector component with saved preference info"""
     available_languages = i18n.get_available_languages()
     current_language = i18n.get_current_language()
+    saved_language = i18n.get_saved_language()
     
     # Create language options
     language_options = list(available_languages.keys())
@@ -194,12 +255,17 @@ def render_language_selector():
     except ValueError:
         current_index = 0
     
+    # Show saved preference info
+    if saved_language and saved_language != current_language:
+        st.info(t("settings.language_preference_saved", language=available_languages.get(saved_language, saved_language)))
+    
     # Render selectbox
     selected_label = st.selectbox(
         "🌍 Language / 언어",
         options=language_labels,
         index=current_index,
-        key="language_selector"
+        key="language_selector",
+        help=t("settings.language_auto_save")
     )
     
     # Extract language code from selection
@@ -208,6 +274,7 @@ def render_language_selector():
     # Update language if changed
     if selected_language != current_language:
         i18n.set_language(selected_language)
+        st.success(t("settings.language_saved", language=available_languages[selected_language]))
         st.rerun()
     
     return selected_language
