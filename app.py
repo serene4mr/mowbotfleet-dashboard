@@ -10,6 +10,7 @@ from ui.login import render_login
 from ui.layout import render_sidebar, render_dashboard, render_missions_page
 from ui.pages.settings import render_settings
 from i18n_manager import t
+from streamlit_cloud_optimization import handle_cloud_limitations
 
 # Configure Streamlit page
 st.set_page_config(
@@ -30,6 +31,10 @@ ensure_default_admin()
 # Authentication gating
 if "user" not in st.session_state:
     render_login()
+    st.stop()
+
+# Handle Streamlit Community Cloud limitations
+if not handle_cloud_limitations():
     st.stop()
 
 page = render_sidebar()
