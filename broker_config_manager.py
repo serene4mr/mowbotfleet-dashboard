@@ -130,6 +130,91 @@ class BrokerConfigManager:
         config = self.get_broker_config()
         protocol = "mqtts" if config.get("use_tls", False) else "mqtt"
         return f"{protocol}://{config['host']}:{config['port']}"
+    
+    def delete_broker_config(self) -> bool:
+        """Delete broker configuration from database"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM secure_config WHERE config_key = 'broker'")
+                conn.commit()
+                
+                if cursor.rowcount > 0:
+                    broker_logger.info("Broker configuration deleted")
+                    return True
+                else:
+                    broker_logger.warning("No broker configuration found to delete")
+                    return False
+                    
+        except Exception as e:
+            broker_logger.error(f"Failed to delete broker config: {e}")
+            return False
+    
+    def broker_config_exists(self) -> bool:
+        """Check if broker configuration exists in database"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT 1 FROM secure_config WHERE config_key = 'broker'")
+                result = cursor.fetchone()
+                return result is not None
+                
+        except Exception as e:
+            broker_logger.error(f"Failed to check broker config existence: {e}")
+            return False
+    
+    def list_all_configs(self) -> Dict[str, Any]:
+        """List all configuration keys and their metadata"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT config_key, created_at, updated_at 
+                    FROM secure_config 
+                    ORDER BY updated_at DESC
+                """)
+                results = cursor.fetchall()
+                
+                configs = {}
+                for row in results:
+                    config_key, created_at, updated_at = row
+                    configs[config_key] = {
+                        "created_at": created_at,
+                        "updated_at": updated_at,
+                        "exists": True
+                    }
+                
+                return configs
+                
+        except Exception as e:
+            broker_logger.error(f"Failed to list configurations: {e}")
+            return {}
+    
+    def get_config_metadata(self) -> Dict[str, Any]:
+        """Get metadata about broker configuration"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT created_at, updated_at 
+                    FROM secure_config 
+                    WHERE config_key = 'broker'
+                """)
+                result = cursor.fetchone()
+                
+                if result:
+                    created_at, updated_at = result
+                    return {
+                        "exists": True,
+                        "created_at": created_at,
+                        "updated_at": updated_at
+                    }
+                else:
+                    return {"exists": False}
+                    
+        except Exception as e:
+            broker_logger.error(f"Failed to get config metadata: {e}")
+            return {"exists": False, "error": str(e)}
 
 # Global instance
 broker_config_manager = BrokerConfigManager()

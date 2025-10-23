@@ -141,7 +141,15 @@ def render_settings():
     buser = st.text_input("Broker Username", value=broker_config["user"])
     bpass = st.text_input("Broker Password", type="password", value=broker_config["password"])
 
-    if st.button("💾 Save & Reconnect"):
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        save_button = st.button("💾 Save & Reconnect", use_container_width=True)
+    
+    with col2:
+        delete_button = st.button("🗑️ Delete Config", use_container_width=True, type="secondary")
+    
+    if save_button:
         # Update broker configuration securely
         new_broker_config = {
             "host": host,
@@ -174,6 +182,49 @@ def render_settings():
 
         # Rerun to update header
         raise RerunException(RerunData())
+    
+    if delete_button:
+        # Delete broker configuration
+        if broker_config_manager.delete_broker_config():
+            st.success("🗑️ Broker configuration deleted!")
+            st.info("ℹ️ Will fallback to YAML configuration on next restart")
+        else:
+            st.error("❌ Failed to delete broker configuration")
+        
+        # Rerun to update form
+        raise RerunException(RerunData())
+
+    # Debug Section (for development)
+    with st.expander("🔧 Debug Information"):
+        st.caption("Development tools for broker configuration management")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button("📋 Show Config Status"):
+                metadata = broker_config_manager.get_config_metadata()
+                if metadata.get("exists"):
+                    st.success(f"✅ Config exists")
+                    st.write(f"Created: {metadata.get('created_at')}")
+                    st.write(f"Updated: {metadata.get('updated_at')}")
+                else:
+                    st.warning("⚠️ No secure config found")
+        
+        with col2:
+            if st.button("📊 List All Configs"):
+                configs = broker_config_manager.list_all_configs()
+                if configs:
+                    for key, info in configs.items():
+                        st.write(f"**{key}**: {info['updated_at']}")
+                else:
+                    st.info("No configurations found")
+        
+        with col3:
+            if st.button("🔄 Reset to Defaults"):
+                if broker_config_manager.delete_broker_config():
+                    st.success("✅ Reset to defaults")
+                else:
+                    st.error("❌ Failed to reset")
 
     st.markdown("---")
     
