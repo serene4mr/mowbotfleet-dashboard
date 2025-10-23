@@ -16,8 +16,8 @@ def render_settings():
     cfg = load_config()
     
     # Language Selection (displayed first)
-    st.subheader("🌍 Language Settings")
-    st.caption("Select your preferred language / 선호하는 언어를 선택하세요")
+    st.subheader(t("settings.language_settings"))
+    st.caption(t("settings.language_selector_caption"))
     
     # Language selector
     selected_language = render_language_selector()
@@ -25,12 +25,12 @@ def render_settings():
     st.markdown("---")
     
     # General Configuration
-    st.subheader("General Configuration")
-    st.caption("Fleet client identification settings")
+    st.subheader(t("settings.general_config_title"))
+    st.caption(t("settings.general_config_caption"))
     
     # General settings
-    manufacturer = st.text_input("Manufacturer", value=cfg["general"]["manufacturer"])
-    serial_number = st.text_input("Serial Number", value=cfg["general"]["serial_number"])
+    manufacturer = st.text_input(t("settings.manufacturer"), value=cfg["general"]["manufacturer"])
+    serial_number = st.text_input(t("settings.serial_number"), value=cfg["general"]["serial_number"])
     
     if st.button("💾 Save General Settings"):
         # Update general settings
@@ -58,8 +58,8 @@ def render_settings():
     st.markdown("---")
     
     # Map Configuration
-    st.subheader("Map Configuration")
-    st.caption("Configure map display settings for all maps in the application")
+    st.subheader(t("settings.map_settings_title"))
+    st.caption(t("settings.map_settings_caption"))
     
     map_style = st.selectbox(
         "Map Style",
@@ -83,15 +83,15 @@ def render_settings():
     
     # Heading offset for orientation display
     heading_offset = st.number_input(
-        "Heading Offset (degrees)",
+        t("settings.heading_offset"),
         min_value=-180,
         max_value=180,
         value=cfg["general"].get("map", {}).get("heading_offset_degrees", -30),
         step=1,
-        help="Empirical correction for AGV arrow orientation on map (adjust if arrows don't point correctly)",
+        help=t("settings.heading_offset_help"),
         key="heading_offset_input"
     )
-    st.caption("🧭 **Tip:** Adjust this if AGV arrows don't point in the correct direction on the map")
+    st.caption(t("settings.heading_offset_tip"))
     
     # Show Mapbox API key field only if satellite is selected
     mapbox_api_key = ""
@@ -110,7 +110,7 @@ def render_settings():
         # Use existing API key if available, but don't require it
         mapbox_api_key = cfg["general"].get("map", {}).get("mapbox_api_key", "")
     
-    if st.button("🗺️ Save Map Settings"):
+    if st.button(t("settings.save_map_settings")):
         # Validate Mapbox configuration
         if map_style == "mapbox_satellite" and not mapbox_api_key:
             st.error("❌ Mapbox API key is required for satellite imagery")
@@ -133,8 +133,8 @@ def render_settings():
         }
         save_config(map_config)
         
-        st.success("✅ Map settings saved! Changes will apply on next page refresh.")
-        st.info("🗺️ Maps will use the new configuration immediately.")
+        st.success(t("settings.map_save_success"))
+        st.info(t("settings.map_info_refresh"))
 
     st.markdown("---")
     
@@ -186,14 +186,14 @@ def render_settings():
     st.markdown("---")
     
     # User Management Section
-    st.subheader("User Management")
-    st.caption("Manage system users with full CRUD operations")
+    st.subheader(t("settings.user_management_title"))
+    st.caption(t("settings.user_management_caption"))
     
     # Ensure default admin user exists
     ensure_default_admin()
     
     # Display current users table
-    st.markdown("### 👥 Current Users")
+    st.markdown(f"### {t('settings.current_users_title')}")
     
     users = list_users()
     user_count = get_user_count()
@@ -300,26 +300,26 @@ def render_settings():
         st.markdown("---")
     
     # Add new user section
-    st.markdown("### ➕ Add New User")
+    st.markdown(f"### {t('settings.add_new_user_title')}")
     
     col1, col2 = st.columns(2)
     with col1:
-        new_user = st.text_input("Username", key="new_user", placeholder="Enter username")
+        new_user = st.text_input(t("settings.username"), key="new_user", placeholder="Enter username")
     
     with col2:
-        new_pass = st.text_input("Password", type="password", key="new_pass", placeholder="Enter password")
+        new_pass = st.text_input(t("settings.password"), type="password", key="new_pass", placeholder="Enter password")
     
-    if st.button("➕ Add User", type="primary"):
+    if st.button(t("settings.add_user"), type="primary"):
         if not new_user or not new_pass:
             st.error("Username and password cannot be empty.")
         elif new_user.strip() == "":
             st.error("Username cannot be empty or just spaces.")
         else:
             if add_or_update_user(new_user.strip(), new_pass):
-                st.success(f"User '{new_user}' added successfully!")
+                st.success(t("settings.user_added_success", username=new_user))
                 st.rerun()
             else:
-                st.error(f"Failed to add user '{new_user}'. User may already exist.")
+                st.error(t("settings.user_added_error", username=new_user))
     
     # User management info
     st.info(f"📊 **Total Users:** {user_count} | 🔑 **Admin User:** Always available | 🛡️ **Admin Protection:** Cannot be deleted")
