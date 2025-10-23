@@ -3,7 +3,7 @@
 import streamlit as st
 import time
 from datetime import datetime
-from mqtt_client import fleet_state, is_connected, get_debug_info
+from mqtt_client import fleet_state, is_connected, get_debug_info, get_broker_info
 from ..components.map import render_map
 from ..components.agv_details import render_agv_details
 from ..components.controls import render_quick_controls
@@ -125,11 +125,19 @@ def render_header():
 @st.fragment(run_every="1s")
 def render_header_status():
     """Render header status that auto-updates every second"""
+    broker_info = get_broker_info()
+    
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        status = "🟢 Connected" if is_connected() else "🔴 Disconnected"
-        st.write(f"**Broker:** {status}")
+        # Enhanced broker status with details
+        if broker_info["status"] == "Connected":
+            status_icon = "🟢"
+            tls_indicator = "🔒" if broker_info["tls"] else "🔓"
+            st.write(f"**Broker:** {status_icon} {broker_info['host']}:{broker_info['port']} {tls_indicator}")
+            st.caption(f"User: {broker_info['username']}")
+        else:
+            st.write(f"**Broker:** 🔴 Disconnected")
     
     with col2:
         online_count = len(fleet_state)

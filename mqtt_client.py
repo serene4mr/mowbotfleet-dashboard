@@ -254,6 +254,33 @@ def get_debug_info():
         "fleet_state_keys": list(fleet_state.keys())
     }
 
+def get_broker_info():
+    """Get current broker connection information"""
+    if not _client:
+        return {
+            "status": "Disconnected",
+            "host": "N/A",
+            "port": "N/A",
+            "username": "N/A",
+            "tls": False
+        }
+    
+    # Get broker details from the client
+    host = getattr(_client.mqtt, 'broker_url', 'Unknown')
+    port = getattr(_client.mqtt, 'broker_port', 'Unknown')
+    username = getattr(_client.mqtt._client, '_username', None) if hasattr(_client.mqtt, '_client') else None
+    
+    # Determine if TLS is being used (check if port is 8883 or if client has TLS configured)
+    tls_enabled = port == 8883 or (hasattr(_client.mqtt._client, '_ssl_context') and _client.mqtt._client._ssl_context is not None)
+    
+    return {
+        "status": "Connected" if is_connected() else "Disconnected",
+        "host": host,
+        "port": port,
+        "username": username or "Anonymous",
+        "tls": tls_enabled
+    }
+
 async def send_instant_action_async(serial: str, action_type: str, blocking_type: str = "HARD", action_parameters: list = None) -> bool:
     """
     Send an instant action to a specific AGV.
