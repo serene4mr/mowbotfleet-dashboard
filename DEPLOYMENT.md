@@ -14,6 +14,8 @@ This guide explains how to deploy the Mowbot Fleet Dashboard to Streamlit Commun
 Ensure your repository has:
 - ✅ `mowbotfleet-dashboard/app.py` as the main file
 - ✅ `requirements.txt` with all dependencies
+- ✅ `.streamlit/config.toml` for Streamlit configuration
+- ✅ `.streamlit/secrets.toml.example` for secrets template
 - ✅ GitHub Actions workflow (`.github/workflows/deploy-streamlit.yml`)
 
 ### 2. **Deploy to Streamlit Community Cloud**
@@ -41,10 +43,11 @@ BROKER_PASSWORD=your-password
 
 #### **Secrets Management:**
 - Use Streamlit's secrets management for sensitive data
-- Create `secrets.toml` in your repository root:
+- Copy `.streamlit/secrets.toml.example` to `.streamlit/secrets.toml`
+- Fill in your actual values:
 
 ```toml
-# secrets.toml
+# .streamlit/secrets.toml
 [broker]
 host = "your-mqtt-broker.com"
 port = 8883
@@ -54,6 +57,10 @@ password = "your-password"
 
 [mapbox]
 api_key = "your-mapbox-api-key"
+
+[app]
+title = "Mowbot Fleet Dashboard"
+version = "1.0.0"
 ```
 
 ### 4. **Post-Deployment Configuration**

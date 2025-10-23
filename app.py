@@ -10,7 +10,18 @@ from ui.login import render_login
 from ui.layout import render_sidebar, render_dashboard, render_missions_page
 from ui.pages.settings import render_settings
 
-st.set_page_config(page_title="MowbotFleet", layout="wide")
+# Configure Streamlit page
+st.set_page_config(
+    page_title="Mowbot Fleet Dashboard",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': 'https://github.com/your-username/mowbot_fleet',
+        'Report a bug': 'https://github.com/your-username/mowbot_fleet/issues',
+        'About': "AGV Fleet Management System - VDA5050 Compatible"
+    }
+)
 
 # Ensure default admin user exists
 ensure_default_admin()
