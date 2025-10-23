@@ -5,6 +5,7 @@
     "version": "1.0.0"
   },
   "navigation": {
+    "navigate": "탐색",
     "dashboard": "대시보드",
     "missions": "미션",
     "settings": "설정",

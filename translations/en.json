@@ -5,6 +5,7 @@
     "version": "1.0.0"
   },
   "navigation": {
+    "navigate": "Navigate",
     "dashboard": "Dashboard",
     "missions": "Missions", 
     "settings": "Settings",
