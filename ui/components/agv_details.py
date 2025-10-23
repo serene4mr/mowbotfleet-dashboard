@@ -59,7 +59,7 @@ def render_agv_details():
 
     # Sensor Diagnostics Section
     if agv.sensor_status:
-        st.markdown("**Sensor Diagnostics**")
+        st.markdown(f"**{t('agv.sensor_diagnostics')}**")
         
         # Build horizontal display string
         sensor_displays = []
@@ -83,7 +83,7 @@ def render_agv_details():
     
     # Errors Section
     if agv.errors:
-        st.markdown("**Active Errors**")
+        st.markdown(f"**{t('agv.active_errors')}**")
         for error in agv.errors:
             severity_color = {
                 'WARNING': '🟡',
@@ -92,9 +92,9 @@ def render_agv_details():
             }.get(error.severity, '🔵')
             
             st.write(f"{severity_color} **{error.type}**: {error.description}")
-            st.caption(f"Occurred: {error.timestamp.strftime('%H:%M:%S')}")
+            st.caption(f"{t('agv.occurred')}: {error.timestamp.strftime('%H:%M:%S')}")
     else:
-        st.success("✅ No active errors")
+        st.success(f"✅ {t('common.no')} {t('agv.active_errors').lower()}")
 
     # Factsheet Section (Static for now) - Commented out
     # with st.expander("AGV Specifications"):
