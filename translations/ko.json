@@ -241,6 +241,24 @@
     "error": "오류",
     "unknown": "알 수 없음"
   },
+  "login": {
+    "title": "MowbotFleet 로그인",
+    "username": "사용자 이름",
+    "password": "비밀번호",
+    "login_button": "🔐 로그인",
+    "welcome_message": "{username}님, 환영합니다!",
+    "invalid_credentials": "잘못된 사용자 이름 또는 비밀번호입니다.",
+    "security_reminder": "🔒 보안 알림: 기본 관리자 비밀번호를 변경해주세요!",
+    "login_help": "MowbotFleet 대시보드에 액세스하려면 자격 증명을 입력하세요",
+    "forgot_password": "비밀번호를 잊으셨나요?",
+    "contact_admin": "도움이 필요하면 시스템 관리자에게 문의하세요",
+    "login_success": "✅ 로그인 성공!",
+    "login_failed": "❌ 로그인 실패",
+    "session_expired": "세션이 만료되었습니다. 다시 로그인해주세요.",
+    "logout_success": "✅ 성공적으로 로그아웃되었습니다!",
+    "access_denied": "액세스가 거부되었습니다. 자격 증명을 확인해주세요.",
+    "system_unavailable": "시스템이 일시적으로 사용할 수 없습니다. 나중에 다시 시도해주세요."
+  },
   "common": {
     "save": "저장",
     "cancel": "취소",

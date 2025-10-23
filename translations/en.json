@@ -241,6 +241,24 @@
     "error": "Error",
     "unknown": "Unknown"
   },
+  "login": {
+    "title": "MowbotFleet Login",
+    "username": "Username",
+    "password": "Password",
+    "login_button": "🔐 Login",
+    "welcome_message": "Welcome, {username}!",
+    "invalid_credentials": "Invalid username or password.",
+    "security_reminder": "🔒 Security Reminder: Please change the default admin password!",
+    "login_help": "Enter your credentials to access the MowbotFleet Dashboard",
+    "forgot_password": "Forgot your password?",
+    "contact_admin": "Contact your system administrator for assistance",
+    "login_success": "✅ Login successful!",
+    "login_failed": "❌ Login failed",
+    "session_expired": "Your session has expired. Please log in again.",
+    "logout_success": "✅ Logged out successfully!",
+    "access_denied": "Access denied. Please check your credentials.",
+    "system_unavailable": "System temporarily unavailable. Please try again later."
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
